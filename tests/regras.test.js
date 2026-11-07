@@ -48,3 +48,19 @@ test('casaAlvo', () => {
   assert.equal(casaAlvo(parseAlvo('+medicacao'), []), false);
   assert.equal(casaAlvo(parseAlvo('+medicacao'), dxs), true);
 });
+test('mesclar: só antecedencia herda por padrão; tipo e fim coerentes', () => {
+  const g = parseRegras('p | dmg | 30+0 | 35+0 | amarelo | m | f | 7 | 3').itens;
+  const s = parseRegras('p | dmg | 30+0 |  | amarelo | m2 | f').itens;
+  const [m] = mesclarPorId(g, { itens: s, desligar: [] });
+  assert.equal(m.repetir, null); assert.equal(m.tipo, 'janela'); assert.equal(m.fim, null); assert.equal(m.antecedencia, 7);
+  assert.equal(mesclarPorId([{ id: 'p', k: 1 }], { itens: [{ id: 'p', k: null }], desligar: [] }, ['k'])[0].k, 1);
+});
+test('mesclar preserva posição do global e resolve ids duplicados', () => {
+  const g = [{ id: 'x' }, { id: 'a', msg: 'g' }, { id: 'y' }];
+  const m = mesclarPorId(g, { itens: [{ id: 'n', msg: '1' }, { id: 'a', msg: 's' }, { id: 'n', msg: '2' }], desligar: [] });
+  assert.deepEqual(m.map(i => [i.id, i.msg]), [['x', undefined], ['a', 's'], ['y', undefined], ['n', '2']]);
+});
+test('CRLF', () => {
+  const r = parseRegras('a | dmg | 30+0 | | amarelo | m | f\r\n-b\r\nc | dmg | 30+0 | | amarelo | m | f\r\n');
+  assert.deepEqual(r.erros, []); assert.equal(r.itens.length, 2); assert.deepEqual(r.desligar, ['b']);
+});

@@ -35,10 +35,12 @@ export function especificidade(alvo) { return alvo.exige.length + alvo.proibe.le
 
 export function grupo(id) { return String(id).split('-').slice(0, 2).join('-'); }
 
-export function mesclarPorId(globais, servico) {
+export function mesclarPorId(globais, servico, herdar = ['antecedencia']) {
   const itens = servico?.itens || [];
   const desligar = new Set(servico?.desligar || []);
-  const porId = new Map(itens.map(i => [i.id, i]));
+  // ids duplicados: vale a última ocorrência; posição da primeira (Map mantém a ordem de inserção)
+  const porId = new Map();
+  for (const s of itens) porId.set(s.id, s);
   const usados = new Set();
   const saida = [];
   for (const g of globais) {
@@ -47,9 +49,9 @@ export function mesclarPorId(globais, servico) {
     if (!s) { saida.push(g); continue; }
     usados.add(g.id);
     const m = { ...s };
-    for (const k of Object.keys(m)) if (m[k] === null && g[k] !== undefined) m[k] = g[k];
+    for (const k of herdar) if (m[k] === null && g[k] !== undefined) m[k] = g[k];
     saida.push(m);
   }
-  for (const s of itens) if (!usados.has(s.id) && !desligar.has(s.id)) { usados.add(s.id); saida.push(s); }
+  for (const [id, s] of porId) if (!usados.has(id) && !desligar.has(id)) saida.push(s);
   return saida;
 }
