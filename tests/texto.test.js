@@ -89,3 +89,18 @@ test('linhaDoTempo marca tipo e tratamento concluído', () => {
   assert.deepEqual(lt.map(x => x.tipo), ['internacao', 'tratamento']);
   assert.equal(lt[1].texto, 'MgSO₄ concluído');
 });
+
+test('copiar duas vezes no mesmo dia mantém o Mudou; no dia seguinte compara com o último snap', () => {
+  const p = base({ dxs: [{ dx: 'dmg', mods: {} }] });
+  const e0 = mkEst([p]);
+  const ontem = marcarPlantao(e0, '2026-11-03', contexto(e0));
+  const e1 = { ...ontem, pac: [{ ...p, dxs: [{ dx: 'dmg', mods: { medicacao: true } }] }] };
+  const MUDOU = 'Mudou: Diagnóstico/modificador: DMG em uso de medicação';
+  assert.equal(linhaDe(gerar(e1), 'Mudou: '), MUDOU);
+  const copia1 = marcarPlantao(e1, HOJE, contexto(e1));
+  assert.equal(linhaDe(gerar(copia1), 'Mudou: '), MUDOU);
+  const copia2 = marcarPlantao(copia1, HOJE, contexto(copia1));
+  assert.equal(linhaDe(gerar(copia2), 'Mudou: '), MUDOU);
+  const amanha = textoPlantao(copia2, '2026-11-05', contexto(copia2));
+  assert.ok(!amanha.includes('Mudou:'), 'no dia seguinte a base é o snap de hoje (sem mudança)');
+});

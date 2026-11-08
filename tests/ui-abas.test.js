@@ -6,9 +6,10 @@ import { contexto } from '../js/nucleo/contexto.js';
 import { novaPendencia } from '../js/nucleo/pendencias.js';
 import { htmlHoje, alertasDeTodos } from '../js/ui/hoje.js';
 import { htmlPlantao, nomePlanilha } from '../js/ui/plantao.js';
-import { htmlProtocolos, htmlGlobais, htmlErros, errosDe, gravarTexto, AVISO_PROTOCOLOS } from '../js/ui/protocolos.js';
-import { htmlDados, confirmaApagar, nomeBackup } from '../js/ui/dados.js';
-import { htmlNovaPend, lerNovaPend } from '../js/ui/pendform.js';
+import { htmlProtocolos, htmlGlobais, htmlErros, errosDe, gravarTexto, AVISO_PROTOCOLOS, acoes as acoesProt, limparRascunhos, temRascunho } from '../js/ui/protocolos.js';
+import { htmlDados, confirmaApagar, nomeBackup, ensaiarRestauracao } from '../js/ui/dados.js';
+import { htmlNovaPend, lerNovaPend, acoes as acoesPend } from '../js/ui/pendform.js';
+import { exportarJSON } from '../js/nucleo/estado.js';
 import { htmlCenso, htmlLembreteBackup } from '../js/ui/censo.js';
 
 const HOJE = '2026-11-08';
@@ -165,4 +166,73 @@ test('Pendência manual: validação (texto, repetição, duração com as regra
   assert.deepEqual(d, { total: 7, unidade: 'dias', inicio: '2026-11-09' });
   assert.equal(lerNovaPend({ texto: 'S', cat: 'Medicação', dur: '24h' }, HOJE).pend.dur.inicio, `${HOJE}T08:00`);
   assert.deepEqual(lerNovaPend({ texto: 'C', cat: 'Medicação', dur: '2doses@1' }, HOJE).pend.dur.doses, []);
+});
+
+test('Restaurar: ensaio aceita backup bom e recusa backup estruturado que quebraria a tela', () => {
+  const bom = comSeed();
+  assert.equal(ensaiarRestauracao(exportarJSON(bom), HOJE).pac.length, 3);
+  const quebra = { leito: '9', igDays: 29 * 7 + 5, igRef: HOJE, dxs: [{ dx: 'rpmo', mods: {} }], alertasFeitos: [{ id: 'corticoide', data: 5 }] };
+  const erroOrig = console.error;
+  console.error = () => {};
+  try {
+    assert.throws(() => ensaiarRestauracao(JSON.stringify({ v: 2, pac: [quebra] }), HOJE), { message: 'Backup inválido' });
+    assert.throws(() => ensaiarRestauracao(JSON.stringify({ v: 2, pac: [null] }), HOJE), { message: 'Backup inválido' });
+  } finally { console.error = erroOrig; }
+});
+
+// Formulário falso do editor de Protocolos (sem DOM).
+function formFalso(tipo, dx = '') {
+  const erros = { innerHTML: '' }, marca = { hidden: true };
+  return { dataset: { tipo, dx }, erros, marca, querySelector: (s) => (s === '.erros' ? erros : marca) };
+}
+
+test('Protocolos: rascunho não salvo sobrevive ao redesenho, com marca "não salvo"; salvar limpa', () => {
+  limparRascunhos();
+  let estado = comSeed();
+  const api = { get estado() { return estado; }, atualizar: (fn) => { estado = fn(estado); return true; }, avisar: () => {} };
+  const form = formFalso('regras');
+  acoesProt['prot-validar']({}, { form, value: 'linha | rascunho' }, api);
+  assert.equal(form.marca.hidden, false);
+  assert.ok(temRascunho('regras'));
+  let html = htmlProtocolos(dados(estado));
+  assert.match(html, /linha \| rascunho<\/textarea>/);
+  assert.match(html, /<span class="nao-salvo">● não salvo<\/span>/);
+  // rascunho de protocolo de diagnóstico: seção aberta e marca no resumo
+  acoesProt['prot-validar']({}, { form: formFalso('prot', 'dmg'), value: 'Novo | Exame | 0 | 0' }, api);
+  html = htmlProtocolos(dados(estado));
+  assert.match(html, /<details class="prot-dx" open>\s*<summary data-act="prot-secao" data-dx="dmg">.*não salvo/);
+  // salvar regras limpa só o rascunho delas
+  acoesProt['prot-salvar']({}, { dataset: { tipo: 'regras', dx: '' }, elements: { texto: { value: 'linha | rascunho' } } }, api);
+  assert.equal(estado.regrasServico, 'linha | rascunho');
+  assert.ok(!temRascunho('regras'));
+  assert.ok(temRascunho('prot', 'dmg'));
+  // voltar ao texto gravado desfaz o rascunho
+  acoesProt['prot-validar']({}, { form: formFalso('prot', 'dmg'), value: estado.prot.dmg }, api);
+  assert.ok(!temRascunho('prot', 'dmg'));
+  limparRascunhos();
+});
+
+test('Protocolos: se a gravação falhar, o rascunho continua na tela', () => {
+  limparRascunhos();
+  const estado = comSeed();
+  const api = { estado, atualizar: () => false, avisar: () => {} };
+  acoesProt['prot-salvar']({}, { dataset: { tipo: 'faixas', dx: '' }, elements: { texto: { value: 'faixa nova' } } }, api);
+  assert.ok(temRascunho('faixas'));
+  assert.match(htmlProtocolos(dados(estado)), /faixa nova<\/textarea>/);
+  limparRascunhos();
+});
+
+test('Pendência manual: falha ao gravar mantém a folha aberta', () => {
+  const estado = comSeed();
+  let fechou = false;
+  const avisos = [];
+  const api = { estado, hoje: HOJE, atualizar: () => false, fecharFolha: () => { fechou = true; }, avisar: (m) => avisos.push(m) };
+  const form = { dataset: { id: estado.pac[0].id }, elements: { texto: { value: 'Ver K' }, cat: { value: 'Exame' }, prazo: { value: HOJE }, rep: { value: '0' }, dur: { value: '' } } };
+  acoesPend['pend-nova-salvar']({}, form, api);
+  assert.equal(fechou, false);
+  assert.deepEqual(avisos, []);
+  api.atualizar = () => true;
+  acoesPend['pend-nova-salvar']({}, form, api);
+  assert.equal(fechou, true);
+  assert.match(avisos[0], /Pendência adicionada/);
 });

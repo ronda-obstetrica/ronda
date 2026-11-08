@@ -58,14 +58,27 @@ function fecharFolha() {
 
 // Devolve true se gravou (ou não precisava gravar). Em falha, o aviso de erro fica na tela:
 // quem chama só mostra aviso de sucesso quando recebe true.
+// O novo estado só é adotado (e gravado) depois de calculado e desenhado sem erro;
+// numa exceção, a tela volta ao estado anterior e nada é gravado.
 function atualizar(mutacao, { gravar = true } = {}) {
-  const novo = mutacao(estado);
-  if (!novo) return false;
-  ctx = contexto(novo);
-  estado = { ...novo, pac: novo.pac.map((p) => gerarPendenciasPorIG(p, hoje, ctx.regras)) };
+  let novoEstado;
+  let novoCtx;
+  try {
+    const novo = mutacao(estado);
+    if (!novo) return false;
+    novoCtx = contexto(novo);
+    novoEstado = { ...novo, pac: novo.pac.map((p) => gerarPendenciasPorIG(p, hoje, novoCtx.regras)) };
+    render(novoEstado, novoCtx);
+  } catch (e) {
+    console.error(e);
+    if (estado) { try { render(); } catch { /* mantém a tela como estava */ } }
+    avisar('Não foi possível aplicar a alteração; nada foi gravado.');
+    return false;
+  }
+  estado = novoEstado;
+  ctx = novoCtx;
   const ok = !gravar || salvar(estado);
   if (!ok) avisar(AVISO_FALHA_SALVAR);
-  render();
   return ok;
 }
 
@@ -76,13 +89,13 @@ const api = {
   get hoje() { return hoje; },
 };
 
-function render() {
+function render(est = estado, c = ctx) {
   for (const b of document.querySelectorAll('.abas [data-aba]')) {
     if (b.dataset.aba === aba) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   }
   $('#data-hoje').textContent = new Date(`${hoje}T12:00`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
   const tela = TELAS[aba];
-  if (tela) tela.render(raiz, { estado, ctx, hoje });
+  if (tela) tela.render(raiz, { estado: est, ctx: c, hoje });
   else {
     const rotulo = ABAS.find(([id]) => id === aba)?.[1] ?? aba;
     raiz.innerHTML = `<section class="em-construcao"><h1 class="titulo-aba">${esc(rotulo)}</h1><p>Em construção.</p></section>`;

@@ -277,14 +277,17 @@ p.banner { padding: 10px 12px; border: 1px solid var(--amber); font-weight: 600;
 .grupo-aguardando h3 { color: var(--amber); }
 .sec-tit { font-size: 1.05rem; }
 .acoes-plantao { gap: 8px; }
-textarea.previa { font-family: var(--mono); font-size: .85rem; width: 100%; color: var(--text); }
+textarea.previa { font-family: var(--mono); font-size: 16px; width: 100%; color: var(--text); }
 .editor { display: grid; gap: 6px; }
-.editor textarea { font-family: var(--mono); font-size: .85rem; width: 100%; }
+.editor textarea { font-family: var(--mono); font-size: 16px; width: 100%; }
 .erros-tit { color: var(--red); font-weight: 600; font-size: .9rem; }
 .erros-lista { margin: 0; padding-left: 18px; color: var(--red); font-size: .85rem; font-family: var(--mono); }
 .prot-dx { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; background: var(--surface); }
-.prot-dx summary { cursor: pointer; min-height: 32px; display: list-item; }
+.prot-dx summary { cursor: pointer; min-height: 44px; padding: 10px 0; display: list-item; }
 .prot-dx[open] summary { margin-bottom: 8px; }
 code { font-family: var(--mono); font-size: .85em; overflow-wrap: anywhere; }
 .restaurar, .apagar-tudo { display: grid; gap: 8px; }
 .apagar-tudo { margin-top: 8px; }
+.editor-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.nao-salvo { color: var(--amber); font-weight: 700; font-size: .85rem; white-space: nowrap; }
+.nao-salvo[hidden] { display: none; }

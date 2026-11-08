@@ -88,3 +88,13 @@ test('app.js registra as telas da Task 14 em TELAS', () => {
   assert.match(src, /const TELAS = \{ censo, hoje: telaHoje, plantao, protocolos, dados \}/);
   assert.doesNotMatch(src, /xlsx/i, 'a biblioteca da planilha não carrega na partida');
 });
+
+test('app.js: atualizar só adota o novo estado depois de calcular e desenhar sem erro', () => {
+  const src = readFileSync(join(RAIZ, 'js', 'app.js'), 'utf8');
+  const corpo = src.slice(src.indexOf('function atualizar('), src.indexOf('const api = {'));
+  const iRender = corpo.indexOf('render(novoEstado, novoCtx)');
+  const iAdota = corpo.indexOf('estado = novoEstado');
+  const iSalva = corpo.indexOf('salvar(estado)');
+  assert.ok(iRender > 0 && iAdota > iRender && iSalva > iAdota, 'ordem: desenhar → adotar → gravar');
+  assert.match(corpo, /catch \(e\)[\s\S]*return false;/);
+});

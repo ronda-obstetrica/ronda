@@ -30,6 +30,9 @@ export function htmlPlantao({ estado, ctx, hoje }) {
 
 export function render(raiz, dados) {
   raiz.innerHTML = htmlPlantao(dados);
+  // Pré-carrega a biblioteca da planilha ao abrir a aba (não na partida do app): assim o primeiro
+  // "Compartilhar planilha" não espera a rede e o Safari mantém o gesto para o compartilhamento.
+  carregarScript(SRC_XLSX).catch(() => { /* tenta de novo no clique */ });
 }
 
 const marcar = (api) => api.atualizar((e) => marcarPlantao(e, api.hoje, api.ctx));

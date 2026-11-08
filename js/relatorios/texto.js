@@ -1,6 +1,6 @@
 // Texto de passagem de plantão (sem identificação de pacientes), pronto para colar.
 import { ordenarPacientes } from '../nucleo/estado.js';
-import { instantaneo, mudancasDesde } from '../nucleo/mudancas.js';
+import { instantaneo, mudancasDesde, baseComparacao } from '../nucleo/mudancas.js';
 import { resumoPaciente } from './comum.js';
 
 const ddmm = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
@@ -40,9 +40,8 @@ function bloco(pac, hoje, ctx, mudou) {
 }
 
 export function textoPlantao(estado, hoje, ctx) {
-  const mud = estado.ultimoPlantao
-    ? mudancasDesde(estado.ultimoPlantao.snap, instantaneo(estado, hoje, ctx), estado, hoje, ctx)
-    : {};
+  const base = baseComparacao(estado, hoje);
+  const mud = base ? mudancasDesde(base, instantaneo(estado, hoje, ctx), estado, hoje, ctx) : {};
   const blocos = ordenarPacientes(estado.pac).map(p => bloco(p, hoje, ctx, mud[p.id]));
   return [
     `PASSAGEM DE PLANTÃO — Enfermaria de alto risco — ${dmy(hoje)}`,

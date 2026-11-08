@@ -96,11 +96,29 @@ export function exportarJSON(estado) {
   return JSON.stringify(estado, null, 2);
 }
 
+const LISTAS_PAC = ['dxs', 'pend', 'alertasFeitos', 'registros', 'dispensadas'];
+const ehObjeto = (v) => !!v && typeof v === 'object' && !Array.isArray(v);
+
+// Paciente do backup: objeto com leito texto/número; listas ausentes viram []; lista de outro tipo = inválido.
+function pacienteDoBackup(p) {
+  if (!ehObjeto(p)) return null;
+  if (typeof p.leito !== 'string' && typeof p.leito !== 'number') return null;
+  const out = { ...p };
+  for (const k of LISTAS_PAC) {
+    if (out[k] === undefined || out[k] === null) out[k] = [];
+    else if (!Array.isArray(out[k])) return null;
+  }
+  if (!out.dxs.every(ehObjeto) || !out.pend.every(ehObjeto)) return null;
+  return out;
+}
+
 export function importarJSON(texto) {
   let obj;
   try { obj = JSON.parse(texto); } catch { throw new Error('Backup inválido'); }
   if (!formatoValido(obj)) throw new Error('Backup inválido');
-  return { ...novoEstado(), ...obj };
+  const pac = obj.pac.map(pacienteDoBackup);
+  if (pac.some((p) => p === null)) throw new Error('Backup inválido');
+  return { ...novoEstado(), ...obj, pac };
 }
 
 function partes(leito) {

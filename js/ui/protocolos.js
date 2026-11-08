@@ -17,6 +17,24 @@ const GLOBAIS = {
 
 // Diagnósticos com a seção aberta (sobrevive ao redesenho depois de salvar).
 const abertos = new Set();
+// Rascunhos não salvos, por "tipo:dx": outro redesenho (salvar outra seção, trocar de aba) não os perde.
+const rascunhos = new Map();
+const chave = (tipo, dx = '') => `${tipo}:${dx}`;
+
+export function textoGravado(estado, tipo, dx = '') {
+  if (tipo === 'prot') return estado.prot?.[dx] ?? '';
+  if (tipo === 'regras') return estado.regrasServico ?? '';
+  return estado.faixasServico ?? '';
+}
+
+// Rascunho igual ao texto gravado não conta (acabou de ser salvo).
+function rascunho(tipo, dx, salvo) {
+  const k = chave(tipo, dx);
+  if (rascunhos.has(k) && rascunhos.get(k) === salvo) rascunhos.delete(k);
+  return rascunhos.get(k);
+}
+export const temRascunho = (tipo, dx = '') => rascunhos.has(chave(tipo, dx));
+export function limparRascunhos() { rascunhos.clear(); }
 
 export function errosDe(tipo, texto) {
   return PARSERS[tipo](texto).erros;
@@ -29,10 +47,16 @@ export function htmlErros(erros) {
     <ul class="erros-lista">${erros.map((e) => `<li>Linha ${esc(e.n)}: ${esc(e.msg)}</li>`).join('')}</ul>`;
 }
 
-function htmlEditor({ tipo, dx = '', texto, rotulo, rows = 8, extra = '' }) {
+const MARCA_NAO_SALVO = (sujo) => `<span class="nao-salvo"${sujo ? '' : ' hidden'}>● não salvo</span>`;
+
+// salvo: texto gravado no estado; o editor mostra o rascunho, se houver.
+function htmlEditor({ tipo, dx = '', salvo, rotulo, rows = 8, extra = '' }) {
   const id = `ed-${tipo}${dx ? `-${dx}` : ''}`;
+  const r = rascunho(tipo, dx, salvo);
+  const sujo = r !== undefined;
+  const texto = sujo ? r : salvo;
   return `<form class="editor" data-submit="prot-salvar" data-tipo="${esc(tipo)}" data-dx="${esc(dx)}">
-    <label class="campo" for="${esc(id)}">${esc(rotulo)}</label>
+    <div class="editor-cab"><label class="campo" for="${esc(id)}">${esc(rotulo)}</label>${MARCA_NAO_SALVO(sujo)}</div>
     <textarea id="${esc(id)}" name="texto" rows="${rows}" spellcheck="false" autocapitalize="off" data-input="prot-validar">${esc(texto)}</textarea>
     <div class="erros" aria-live="polite">${htmlErros(errosDe(tipo, texto))}</div>
     <div class="acoes-linha"><button type="submit" class="primario">Salvar</button>${extra}</div>
@@ -41,14 +65,17 @@ function htmlEditor({ tipo, dx = '', texto, rotulo, rows = 8, extra = '' }) {
 
 function htmlProtDx(estado) {
   return Object.entries(DIAGNOSTICOS).map(([dx, def]) => {
-    const texto = estado.prot?.[dx] ?? '';
-    const { itens, erros } = parseProtocolo(texto);
+    const texto = textoGravado(estado, 'prot', dx);
+    const r = rascunho('prot', dx, texto);
+    const sujo = r !== undefined;
+    const { itens, erros } = parseProtocolo(sujo ? r : texto);
     const resumo = `${itens.length} ${itens.length === 1 ? 'item' : 'itens'}${erros.length ? ` · ⚠ ${erros.length} com erro` : ''}`;
     const extra = PROT_PADRAO[dx] !== undefined
       ? `<button type="button" class="sec" data-act="prot-modelo" data-dx="${esc(dx)}">Restaurar modelo</button>` : '';
+    if (sujo) abertos.add(dx);
     return `<details class="prot-dx"${abertos.has(dx) ? ' open' : ''}>
-      <summary data-act="prot-secao" data-dx="${esc(dx)}"><b>${esc(def.nome)}</b> <span class="nota">${resumo}</span></summary>
-      ${htmlEditor({ tipo: 'prot', dx, texto, rotulo: `Protocolo — ${def.nome}`, extra })}
+      <summary data-act="prot-secao" data-dx="${esc(dx)}"><b>${esc(def.nome)}</b> <span class="nota">${resumo}</span>${sujo ? ' <span class="nao-salvo">● não salvo</span>' : ''}</summary>
+      ${htmlEditor({ tipo: 'prot', dx, salvo: texto, rotulo: `Protocolo — ${def.nome}`, extra })}
     </details>`;
   }).join('');
 }
@@ -65,12 +92,12 @@ export function htmlProtocolos({ estado }) {
     <section class="bloco">
       <h2 class="sec-tit">Regras de alerta do serviço</h2>
       <p class="nota">Uma regra por linha: <code>id | diagnóstico+mod!mod | IG início | IG fim | vermelho/amarelo | mensagem | fonte | antecedência | repetir</code>. Mesmo id de uma regra global a substitui; <code>-id</code> desliga uma global.</p>
-      ${htmlEditor({ tipo: 'regras', texto: estado.regrasServico ?? '', rotulo: 'Regras do serviço', extra: verGlobais('regras') })}
+      ${htmlEditor({ tipo: 'regras', salvo: textoGravado(estado, 'regras'), rotulo: 'Regras do serviço', extra: verGlobais('regras') })}
     </section>
     <section class="bloco">
       <h2 class="sec-tit">Faixas dos controles do serviço</h2>
       <p class="nota">Uma faixa por linha: <code>id | diagnóstico | medida | limite | vermelho/amarelo | mensagem | fonte</code>. Mesmo id de uma faixa global a substitui; <code>-id</code> desliga uma global.</p>
-      ${htmlEditor({ tipo: 'faixas', texto: estado.faixasServico ?? '', rotulo: 'Faixas do serviço', rows: 6, extra: verGlobais('faixas') })}
+      ${htmlEditor({ tipo: 'faixas', salvo: textoGravado(estado, 'faixas'), rotulo: 'Faixas do serviço', rows: 6, extra: verGlobais('faixas') })}
     </section>`;
 }
 
@@ -104,9 +131,15 @@ export const acoes = {
     const dx = el.dataset.dx;
     if (abertos.has(dx)) abertos.delete(dx); else abertos.add(dx);
   },
-  'prot-validar': (ev, el) => {
+  'prot-validar': (ev, el, api) => {
     const form = el.form;
-    form.querySelector('.erros').innerHTML = htmlErros(errosDe(form.dataset.tipo, el.value));
+    const { tipo, dx } = form.dataset;
+    if (!PARSERS[tipo]) return;
+    const sujo = el.value !== textoGravado(api.estado, tipo, dx);
+    if (sujo) rascunhos.set(chave(tipo, dx), el.value); else rascunhos.delete(chave(tipo, dx));
+    form.querySelector('.erros').innerHTML = htmlErros(errosDe(tipo, el.value));
+    const marca = form.querySelector('.nao-salvo');
+    if (marca) marca.hidden = !sujo;
   },
   'prot-salvar': (ev, form, api) => {
     const { tipo, dx } = form.dataset;
@@ -114,7 +147,10 @@ export const acoes = {
     const texto = form.elements.texto.value;
     const n = errosDe(tipo, texto).length;
     if (tipo === 'prot') abertos.add(dx);
+    // O rascunho fica até o redesenho: igual ao gravado, some; se a alteração falhar, continua na tela.
+    rascunhos.set(chave(tipo, dx), texto);
     if (api.atualizar(gravarTexto(tipo, dx, texto))) {
+      rascunhos.delete(chave(tipo, dx));
       api.avisar(n ? `Salvo. ${n} ${n === 1 ? 'linha com erro será ignorada' : 'linhas com erro serão ignoradas'}.` : 'Salvo.');
     }
   },
@@ -123,6 +159,7 @@ export const acoes = {
     if (PROT_PADRAO[dx] === undefined) return;
     if (!globalThis.confirm('Substituir este protocolo pelo modelo que acompanha o app?')) return;
     abertos.add(dx);
+    rascunhos.delete(chave('prot', dx));
     if (api.atualizar(gravarTexto('prot', dx, PROT_PADRAO[dx]))) api.avisar('Modelo restaurado.');
   },
   'ver-globais': (ev, el, api) => {

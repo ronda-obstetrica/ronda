@@ -61,8 +61,9 @@ export const acoes = {
     if (r.erro) { api.avisar(r.erro); return; }
     const k = chavePend(r.pend);
     if (pac.pend.some((p) => !p.done && chavePend(p) === k)) { api.avisar('Essa pendência já está aberta neste leito.'); return; }
-    const ok = api.atualizar(mudarPac(pac.id, (p) => ({ ...p, pend: [...p.pend, r.pend] })));
+    // Em falha, a folha continua aberta com o que foi digitado (o aviso de erro já está na tela).
+    if (!api.atualizar(mudarPac(pac.id, (p) => ({ ...p, pend: [...p.pend, r.pend] })))) return;
     api.fecharFolha();
-    if (ok) api.avisar(`Pendência adicionada ao leito ${pac.leito}.`);
+    api.avisar(`Pendência adicionada ao leito ${pac.leito}.`);
   },
 };

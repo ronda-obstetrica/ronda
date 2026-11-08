@@ -69,6 +69,15 @@ export function mudancasDesde(anterior, atual, estado, hoje, ctx) {
   return saida;
 }
 
+// base: o instantâneo contra o qual o "o que mudou" de hoje compara. Gerar de novo no mesmo dia
+// mantém a base (o plantão do dia anterior), para a segunda cópia não zerar as mudanças.
 export function marcarPlantao(estado, hoje, ctx) {
-  return { ...estado, ultimoPlantao: { data: hoje, snap: instantaneo(estado, hoje, ctx) } };
+  const ant = estado.ultimoPlantao;
+  const base = ant ? (ant.data === hoje ? ant.base ?? null : ant.snap ?? null) : null;
+  return { ...estado, ultimoPlantao: { data: hoje, snap: instantaneo(estado, hoje, ctx), base } };
+}
+
+export function baseComparacao(estado, hoje) {
+  const u = estado.ultimoPlantao;
+  return (u?.data === hoje ? u.base : u?.snap) ?? null;
 }

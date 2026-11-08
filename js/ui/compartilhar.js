@@ -28,7 +28,11 @@ export async function copiarTexto(texto) {
   const ta = document.createElement('textarea');
   ta.value = texto;
   ta.setAttribute('readonly', '');
+  // 16px evita o zoom automático do iOS ao focar; fixo no canto para não rolar a página.
   ta.style.position = 'fixed';
+  ta.style.top = '0';
+  ta.style.left = '0';
+  ta.style.fontSize = '16px';
   ta.style.opacity = '0';
   document.body.appendChild(ta);
   ta.select();

@@ -70,6 +70,16 @@ test('exportar/importar', () => {
   assert.throws(() => importarJSON('nao json'), { message: 'Backup inválido' });
 });
 
+test('importarJSON valida cada paciente e completa listas ausentes', () => {
+  const bk = (pac) => JSON.stringify({ v: 2, pac });
+  const ok = importarJSON(bk([{ leito: '3' }, { leito: 7, dxs: [{ dx: 'dmg', mods: {} }] }]));
+  for (const k of ['dxs', 'pend', 'alertasFeitos', 'registros', 'dispensadas']) assert.deepEqual(ok.pac[0][k], [], k);
+  assert.equal(ok.pac[1].dxs.length, 1);
+  for (const ruim of [[null], ['texto'], [[]], [{}], [{ leito: {} }], [{ leito: '1', pend: 'x' }], [{ leito: '1', dxs: {} }], [{ leito: '1', pend: [null] }], [{ leito: '1', dxs: ['dmg'] }]]) {
+    assert.throws(() => importarJSON(bk(ruim)), { message: 'Backup inválido' }, JSON.stringify(ruim));
+  }
+});
+
 test('ordenarPacientes', () => {
   const pac = ['10A', '4', '10', '2B', '04'].map((leito) => ({ leito }));
   assert.deepEqual(ordenarPacientes(pac).map((p) => p.leito), ['2B', '4', '04', '10', '10A']);

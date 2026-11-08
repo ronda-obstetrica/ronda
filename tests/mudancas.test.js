@@ -1,5 +1,5 @@
 import { test } from 'node:test'; import assert from 'node:assert/strict';
-import { instantaneo, mudancasDesde, marcarPlantao } from '../js/nucleo/mudancas.js';
+import { instantaneo, mudancasDesde, marcarPlantao, baseComparacao } from '../js/nucleo/mudancas.js';
 import { novoEstado, novaPaciente } from '../js/nucleo/estado.js';
 import { novaPendencia } from '../js/nucleo/pendencias.js';
 import { contexto } from '../js/nucleo/contexto.js';
@@ -104,4 +104,20 @@ test('ordem das frases', () => {
   const idx = pref.map(p => r.findIndex(f => f.startsWith(p)));
   assert.ok(idx.every(i => i >= 0), JSON.stringify(r));
   assert.deepEqual([...idx].sort((a, b) => a - b), idx);
+});
+
+test('marcarPlantao guarda a base: 2ª geração no mesmo dia mantém a base do dia anterior', () => {
+  const e = est(mk());
+  const d1 = marcarPlantao(e, ONTEM, ctx(e));
+  assert.equal(d1.ultimoPlantao.base, null);
+  assert.equal(baseComparacao(d1, ONTEM), null);
+  assert.deepEqual(baseComparacao(d1, HOJE), d1.ultimoPlantao.snap);
+  const h1 = marcarPlantao(d1, HOJE, ctx(d1));
+  assert.deepEqual(h1.ultimoPlantao.base, d1.ultimoPlantao.snap);
+  const h2 = marcarPlantao(h1, HOJE, ctx(h1));
+  assert.deepEqual(h2.ultimoPlantao.base, d1.ultimoPlantao.snap);
+  assert.deepEqual(baseComparacao(h2, HOJE), d1.ultimoPlantao.snap);
+  const amanha = marcarPlantao(h2, '2026-11-09', ctx(h2));
+  assert.deepEqual(amanha.ultimoPlantao.base, h2.ultimoPlantao.snap);
+  assert.equal(baseComparacao(novoEstado(), HOJE), null);
 });
