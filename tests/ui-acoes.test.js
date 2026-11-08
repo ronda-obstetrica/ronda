@@ -1,4 +1,4 @@
-// Ações da UI com uma api falsa (sem DOM): aviso de falha ao salvar e alta provisória.
+// Ações da UI com uma api falsa (sem DOM): aviso de falha ao salvar e alta.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { novoEstado, seedExemplos, novaPaciente } from '../js/nucleo/estado.js';
@@ -58,12 +58,25 @@ test('salvar com sucesso mostra o aviso de sucesso', () => {
   assert.equal(api.avisos.at(-1), 'Leito 12 salvo.');
 });
 
-test('Alta/parto ainda não apaga nada', () => {
+test('Alta/parto abre a confirmação sem apagar; Remover apaga só aquele leito', () => {
   const api = apiFalsa({ salvarOk: true });
+  let folha = '';
+  api.abrirFolha = (h) => { folha = h; };
   const antes = api.estado.pac.length;
-  censo.alta(null, { dataset: { id: leito04(api).id } }, api);
+  const id = leito04(api).id;
+  censo.alta(null, { dataset: { id } }, api);
   assert.equal(api.estado.pac.length, antes);
-  assert.equal(api.avisos.at(-1), 'Alta/parto: disponível em breve.');
+  for (const t of ['Remover leito 04 do app?', 'Gerar ficha antes', 'Copiar texto antes', 'Remover', 'Cancelar']) assert.ok(folha.includes(t), t);
+  censo['alta-remover'](null, { dataset: { id } }, api);
+  assert.equal(api.estado.pac.length, antes - 1);
+  assert.ok(!api.estado.pac.some((p) => p.id === id));
+  assert.equal(api.avisos.at(-1), 'Leito 04 removido.');
+});
+
+test('Remover com falha ao salvar não mostra sucesso', () => {
+  const api = apiFalsa({ salvarOk: false });
+  censo['alta-remover'](null, { dataset: { id: leito04(api).id } }, api);
+  assert.equal(api.avisos.at(-1), AVISO_FALHA_SALVAR);
 });
 
 test('cadastro escapa valores vindos de um backup importado', () => {

@@ -64,7 +64,7 @@ test('Plantão: botões, prévia escapada e nome da planilha', () => {
   const estado = comSeed();
   estado.pac[0].obs = XSS;
   const html = htmlPlantao(dados(estado));
-  for (const b of ['Copiar texto', 'Compartilhar PDF', 'Compartilhar planilha']) assert.ok(html.includes(`>${b}</button>`), b);
+  for (const b of ['Copiar texto', 'Imprimir / salvar PDF', 'Compartilhar planilha']) assert.ok(html.includes(`>${b}</button>`), b);
   assert.match(html, /<textarea class="previa" readonly[^>]*>PASSAGEM DE PLANTÃO/);
   semXss(html);
   assert.equal(nomePlanilha(HOJE), 'censo-2026-11-08.xlsx');

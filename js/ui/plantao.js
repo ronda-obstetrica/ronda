@@ -1,9 +1,11 @@
-// Aba Plantão: prévia do texto da passagem, copiar, planilha .xlsx e (Task 16) PDF.
+// Aba Plantão: prévia do texto da passagem, copiar, planilha .xlsx e impressão das fichas (PDF).
 // Gerar texto/planilha marca o plantão (marcarPlantao): o próximo "o que mudou" parte daqui.
 import { esc, ddmm } from './util.js';
 import { compartilharArquivo, copiarTexto, carregarScript } from './compartilhar.js';
 import { textoPlantao } from '../relatorios/texto.js';
 import { linhasPlanilha, gerarXlsx } from '../relatorios/planilha.js';
+import { htmlFichas } from '../relatorios/ficha.js';
+import { imprimirHtml } from './imprimir.js';
 import { marcarPlantao } from '../nucleo/mudancas.js';
 
 export const SRC_XLSX = 'vendor/xlsx.mini.min.js';
@@ -19,7 +21,7 @@ export function htmlPlantao({ estado, ctx, hoje }) {
     <p class="nota">${base} Copiar o texto ou compartilhar a planilha marca um novo plantão.</p>
     <div class="acoes-linha acoes-plantao">
       <button type="button" class="primario" data-act="plantao-copiar">Copiar texto</button>
-      <button type="button" class="sec" data-act="plantao-pdf">Compartilhar PDF</button>
+      <button type="button" class="sec" data-act="plantao-pdf">Imprimir / salvar PDF</button>
       <button type="button" class="sec" data-act="plantao-planilha">Compartilhar planilha</button>
     </div>
     <p class="nota">O texto e os arquivos não têm identificação das pacientes. Confira antes de enviar.</p>
@@ -51,7 +53,7 @@ export const acoes = {
     }
     if (marcar(api)) api.avisar('Texto copiado.');
   },
-  'plantao-pdf': (ev, el, api) => api.avisar('PDF: disponível em breve.'),
+  'plantao-pdf': (ev, el, api) => imprimirHtml(htmlFichas(api.estado, api.hoje, api.ctx)),
   'plantao-planilha': async (ev, el, api) => {
     el.disabled = true;
     try {

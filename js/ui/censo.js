@@ -2,6 +2,11 @@
 import { acharPac, mudarPac, ddmm } from './util.js';
 import { htmlCartao } from './cartao.js';
 import { htmlFeitoAlerta, htmlFeitoPend, htmlEscolha } from './formularios.js';
+import { htmlFichas } from '../relatorios/ficha.js';
+import { textoPlantao } from '../relatorios/texto.js';
+import { imprimirHtml } from './imprimir.js';
+import { copiarTexto } from './compartilhar.js';
+import { esc } from './util.js';
 import { acoes as acoesPend } from './pendform.js';
 import { ordenarPacientes, precisaLembrarBackup } from '../nucleo/estado.js';
 import { DIAGNOSTICOS, alternarMod } from '../nucleo/diagnosticos.js';
@@ -98,6 +103,29 @@ export const acoes = {
     if (!globalThis.confirm('Apagar este valor?')) return;
     api.atualizar(mudarPac(pac.id, (p) => ({ ...p, registros: (p.registros ?? []).filter((r) => r.id !== el.dataset.reg) })));
   }),
-  // Provisório e sem apagar nada: a Task 16 implementa a alta (ficha/texto antes de remover).
-  alta: (ev, el, api) => api.avisar('Alta/parto: disponível em breve.'),
+  // Alta/parto: confirmação com ficha/texto antes; a remoção é definitiva.
+  alta: comPac((pac, el, api) => api.abrirFolha(htmlAlta(pac))),
+  'alta-ficha': comPac((pac, el, api) => imprimirHtml(htmlFichas(api.estado, api.hoje, api.ctx, { pacIds: [pac.id] }))),
+  'alta-copiar': comPac(async (pac, el, api) => {
+    const so = { ...api.estado, pac: [pac] };
+    let ok = false;
+    try { ok = await copiarTexto(textoPlantao(so, api.hoje, api.ctx)); } catch (e) { console.error(e); }
+    api.avisar(ok ? 'Texto do leito copiado.' : 'Não foi possível copiar o texto.');
+  }),
+  'alta-remover': comPac((pac, el, api) => {
+    if (api.atualizar((e) => ({ ...e, pac: e.pac.filter((p) => p.id !== pac.id) }))) {
+      api.fecharFolha();
+      api.avisar(`Leito ${pac.leito} removido.`);
+    }
+  }),
 };
+
+export function htmlAlta(pac) {
+  const d = `data-id="${esc(pac.id)}"`;
+  return `<h2>Remover leito ${esc(pac.leito)} do app?</h2>
+    <p class="nota">A remoção é definitiva: os dados deste leito não poderão ser recuperados. Gere a ficha ou copie o texto antes, se precisar.</p>
+    <button type="button" class="sec largo" data-act="alta-ficha" ${d}>Gerar ficha antes</button>
+    <button type="button" class="sec largo" data-act="alta-copiar" ${d}>Copiar texto antes</button>
+    <button type="button" class="sec perigo largo" data-act="alta-remover" ${d}>Remover</button>
+    <button type="button" class="sec largo" data-act="fechar-folha" data-foco>Cancelar</button>`;
+}

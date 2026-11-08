@@ -45,7 +45,7 @@ test('censo.js exporta render e acoes (módulo sem DOM no topo)', async () => {
   const censo = await import('../js/ui/censo.js');
   assert.equal(typeof censo.render, 'function');
   assert.equal(typeof censo.acoes, 'object');
-  for (const k of ['mod', 'alerta-feito', 'alerta-pend', 'pend-feito', 'pend-aguardando', 'registrar-valor', 'alta']) {
+  for (const k of ['mod', 'alerta-feito', 'alerta-pend', 'pend-feito', 'pend-aguardando', 'registrar-valor', 'alta', 'alta-ficha', 'alta-copiar', 'alta-remover']) {
     assert.equal(typeof censo.acoes[k], 'function', `falta a ação ${k}`);
   }
 });
