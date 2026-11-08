@@ -14,9 +14,10 @@ export function prefixoAlerta(a) {
   return a.nivel === 'vermelho' ? '▲ AGIR:' : '● ATENÇÃO:';
 }
 
+// rotulo é texto puro (escapado aqui); extra são atributos já montados com esc().
 const btn = (act, dados, rotulo, extra = '') => {
   const attrs = Object.entries(dados).map(([k, v]) => ` data-${k}="${esc(v)}"`).join('');
-  return `<button type="button" data-act="${act}"${attrs}${extra}>${rotulo}</button>`;
+  return `<button type="button" data-act="${esc(act)}"${attrs}${extra}>${esc(rotulo)}</button>`;
 };
 
 function htmlCabecalho(pac, r) {
@@ -42,11 +43,11 @@ function htmlDiagnosticos(pac) {
       const dados = { id: pac.id, i, mod: m.id };
       if (m.tipo === 'escolha') {
         const opc = m.opcoes.find((o) => o.id === mods[m.id]);
-        const rot = opc ? esc(opc.curto) : `${esc(NOME_ESCOLHA[m.id] ?? m.id)}?`;
+        const rot = opc ? opc.curto : `${NOME_ESCOLHA[m.id] ?? m.id}?`;
         return btn('mod', dados, `${rot} ▾`, ` class="mod mod-escolha${opc ? ' ligado' : ''}" aria-haspopup="dialog" aria-label="${esc(NOME_ESCOLHA[m.id] ?? m.id)}: ${opc ? esc(opc.extenso) : 'não definido'}"`);
       }
       const on = mods[m.id] === true;
-      return btn('mod', dados, `${on ? '✓ ' : '+ '}${esc(m.curto)}`, ` class="mod${on ? ' ligado' : ''}" aria-pressed="${on}"`);
+      return btn('mod', dados, `${on ? '✓ ' : '+ '}${m.curto}`, ` class="mod${on ? ' ligado' : ''}" aria-pressed="${on}"`);
     }).join('');
     return `<div class="dx"><span class="dx-nome">${esc(def?.nome ?? item.dx)}</span>${botoes}</div>`;
   }).join('');
@@ -89,7 +90,7 @@ function htmlControles(pac, hoje, ctx) {
       ${btn('valor-apagar', { id: pac.id, reg: reg.id }, '×', ` class="icone" aria-label="Apagar valor ${esc(fmtValor(reg.valor))}"`)}</li>`;
   }).join('');
   const pa = medidas[0].id === 'pa';
-  const opcoes = medidas.map((m) => `<option value="${m.id}">${esc(m.nome)}</option>`).join('');
+  const opcoes = medidas.map((m) => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`).join('');
   return `<section class="bloco"><h3>Controles de hoje</h3>
     ${lista ? `<ul class="registros">${lista}</ul>` : '<p class="vazio-linha">Nenhum valor hoje.</p>'}
     <form class="controle" data-submit="registrar-valor" data-id="${esc(pac.id)}">

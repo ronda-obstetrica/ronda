@@ -63,16 +63,16 @@ export function htmlModsForm(item) {
   const mods = item.mods || {};
   return def.mods.filter((m) => modVisivel(m, mods)).map((m) => {
     if (m.tipo === 'escolha') {
-      const ops = m.opcoes.map((o) => `<option value="${o.id}"${mods[m.id] === o.id ? ' selected' : ''}>${esc(o.curto)} — ${esc(o.extenso)}</option>`).join('');
+      const ops = m.opcoes.map((o) => `<option value="${esc(o.id)}"${mods[m.id] === o.id ? ' selected' : ''}>${esc(o.curto)} — ${esc(o.extenso)}</option>`).join('');
       return `<label class="campo">${esc(NOME_ESCOLHA[m.id] ?? m.id)}
-        <select data-mod="${m.id}" data-input="dx-form"><option value="">—</option>${ops}</select></label>`;
+        <select data-mod="${esc(m.id)}" data-input="dx-form"><option value="">—</option>${ops}</select></label>`;
     }
-    return `<label class="chip"><input type="checkbox" data-mod="${m.id}"${mods[m.id] === true ? ' checked' : ''}> ${esc(m.curto)}</label>`;
+    return `<label class="chip"><input type="checkbox" data-mod="${esc(m.id)}"${mods[m.id] === true ? ' checked' : ''}> ${esc(m.curto)}</label>`;
   }).join('');
 }
 
 function htmlDxBloco(item) {
-  const ops = Object.entries(DIAGNOSTICOS).map(([id, d]) => `<option value="${id}"${item?.dx === id ? ' selected' : ''}>${esc(d.nome)}</option>`).join('');
+  const ops = Object.entries(DIAGNOSTICOS).map(([id, d]) => `<option value="${esc(id)}"${item?.dx === id ? ' selected' : ''}>${esc(d.nome)}</option>`).join('');
   return `<div class="dx-bloco">
     <div class="linha">
       <select data-campo="dx" data-input="dx-form" aria-label="Diagnóstico"><option value="">— diagnóstico —</option>${ops}</select>
@@ -95,7 +95,7 @@ function lerDx(bloco) {
 
 export function htmlCadastro(pac, hoje) {
   const d = pac?.datacao ?? {};
-  const num = (nome, rot, v, max) => `<label class="campo">${rot}<input type="number" name="${nome}" inputmode="numeric" min="0" max="${max}" value="${v ?? ''}"></label>`;
+  const num = (nome, rot, v, max) => `<label class="campo">${rot}<input type="number" name="${nome}" inputmode="numeric" min="0" max="${max}" value="${esc(v ?? '')}"></label>`;
   const dat = textoDatacao({ dum: d.dum ?? '', usgData: d.usg?.data ?? '', usgIG: d.usg ? fmtIG(d.usg.igDias) : '' }, hoje);
   const escolhida = d.escolhida ?? dat.sug?.fonte ?? 'dum';
   const radio = (v, rot) => `<label class="chip"><input type="radio" name="escolhida" value="${v}" data-input="datacao-escolha"${escolhida === v ? ' checked' : ''}> ${rot}</label>`;
@@ -108,16 +108,16 @@ export function htmlCadastro(pac, hoje) {
       <button type="button" class="sec" data-act="dx-add">+ diagnóstico</button>
     </fieldset>
     <fieldset><legend>Idade gestacional</legend>
-      <label class="campo">DUM<input type="date" name="dum" max="${hoje}" value="${esc(d.dum ?? '')}" data-input="datacao"></label>
+      <label class="campo">DUM<input type="date" name="dum" max="${esc(hoje)}" value="${esc(d.dum ?? '')}" data-input="datacao"></label>
       <div class="linha2">
-        <label class="campo">1ª USG — data<input type="date" name="usgData" max="${hoje}" value="${esc(d.usg?.data ?? '')}" data-input="datacao"></label>
-        <label class="campo">IG na USG<input name="usgIG" placeholder="31+2" autocomplete="off" value="${d.usg ? fmtIG(d.usg.igDias) : ''}" data-input="datacao"></label>
+        <label class="campo">1ª USG — data<input type="date" name="usgData" max="${esc(hoje)}" value="${esc(d.usg?.data ?? '')}" data-input="datacao"></label>
+        <label class="campo">IG na USG<input name="usgIG" placeholder="31+2" autocomplete="off" value="${esc(d.usg ? fmtIG(d.usg.igDias) : '')}" data-input="datacao"></label>
       </div>
       <p class="datacao-preview${dat.erro ? ' erro' : ''}" aria-live="polite">${esc(dat.erro ? `${dat.texto ? dat.texto + ' — ' : ''}${dat.erro}` : dat.texto)}</p>
       <div class="datacao-escolha"${dat.sug?.diferenca != null ? '' : ' hidden'}><span>Usar:</span>${radio('dum', 'DUM')}${radio('usg', 'USG')}</div>
     </fieldset>
     <div class="linha5">${num('idade', 'Idade', pac?.idade, 70)}${num('g', 'G', pac?.g, 30)}${num('p', 'P', pac?.p, 30)}${num('c', 'C', pac?.c, 30)}${num('a', 'A', pac?.a, 30)}</div>
-    <label class="campo">Internação<input type="date" name="int" max="${hoje}" value="${esc(pac?.int || hoje)}"></label>
+    <label class="campo">Internação<input type="date" name="int" max="${esc(hoje)}" value="${esc(pac?.int || hoje)}"></label>
     <label class="campo">Alergias<input name="alerg" maxlength="${LIMITE_ALERG}" autocomplete="off" value="${esc(pac?.alerg ?? '')}"></label>
     ${campoLivre({ nome: 'obs', rotulo: 'Observação', valor: pac?.obs ?? '', max: LIMITE_OBS, multilinha: true })}
     ${botoesForm()}
@@ -156,7 +156,7 @@ function salvarPaciente(ev, form, api) {
     alerg: cortar(el.alerg.value, LIMITE_ALERG),
     obs: cortar(el.obs.value, LIMITE_OBS),
   };
-  api.atualizar((estado) => {
+  const ok = api.atualizar((estado) => {
     const antigo = id ? estado.pac.find((p) => p.id === id) : null;
     let pac = antigo ? { ...antigo, ...dados } : novaPaciente(dados);
     if (dat.sug) pac = aplicarDatacao(pac, { dum: dat.dum, usg: dat.usg, escolhida }, hoje);
@@ -168,7 +168,7 @@ function salvarPaciente(ev, form, api) {
     return { ...estado, pac: antigo ? estado.pac.map((p) => (p.id === id ? pac : p)) : [...estado.pac, pac] };
   });
   api.fecharFolha();
-  api.avisar(`Leito ${leito} salvo.`);
+  if (ok) api.avisar(`Leito ${leito} salvo.`);
 }
 
 // ---------- Folhas pequenas ----------
@@ -177,7 +177,7 @@ export function htmlFeitoAlerta(pac, alerta, hoje) {
   return `<form data-submit="alerta-feito-salvar" data-id="${esc(pac.id)}" data-regra="${esc(alerta.regraId)}">
     <h2>Registrar como feito</h2>
     <p class="nota">Leito ${esc(pac.leito)} · ${esc(alerta.msg)}</p>
-    <label class="campo">Data<input type="date" name="data" value="${hoje}" max="${hoje}"></label>
+    <label class="campo">Data<input type="date" name="data" value="${esc(hoje)}" max="${esc(hoje)}"></label>
     ${campoLivre({ nome: 'res', rotulo: 'Resultado curto (opcional)', max: LIMITE_RES })}
     ${botoesForm('Salvar', true)}
   </form>`;
@@ -196,7 +196,7 @@ export function htmlFeitoPend(pac, pend) {
 export function htmlEscolha(pac, i, mod) {
   const atual = pac.dxs[i]?.mods?.[mod.id];
   const op = (valor, rotulo) => `<button type="button" class="opcao${atual === valor || (!atual && !valor) ? ' ligado' : ''}" aria-pressed="${atual === valor || (!atual && !valor)}"
-    data-act="mod-op" data-id="${esc(pac.id)}" data-i="${i}" data-mod="${mod.id}" data-valor="${valor}">${rotulo}</button>`;
+    data-act="mod-op" data-id="${esc(pac.id)}" data-i="${esc(i)}" data-mod="${esc(mod.id)}" data-valor="${esc(valor)}">${rotulo}</button>`;
   return `<h2>${esc(NOME_ESCOLHA[mod.id] ?? mod.id)} — ${esc(DIAGNOSTICOS[pac.dxs[i].dx]?.nome ?? '')}</h2>
     <p class="nota">Leito ${esc(pac.leito)}</p>
     <div class="opcoes">${mod.opcoes.map((o) => op(o.id, `<b>${esc(o.curto)}</b> ${esc(o.extenso)}`)).join('')}${op('', 'Não definido')}</div>

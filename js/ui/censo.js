@@ -60,8 +60,7 @@ export const acoes = {
     if (!alerta) return;
     const novo = pendenciaDeAlerta(pac, alerta, api.hoje);
     if (novo.pend.length === pac.pend.length) { api.avisar('Esse alerta já está nas pendências.'); return; }
-    api.atualizar(mudarPac(pac.id, () => novo));
-    api.avisar('Virou pendência para hoje.');
+    if (api.atualizar(mudarPac(pac.id, () => novo))) api.avisar('Virou pendência para hoje.');
   }),
   'pend-feito': comPac((pac, el, api) => {
     const pend = pac.pend.find((p) => p.id === el.dataset.pend);
@@ -83,17 +82,13 @@ export const acoes = {
     if (valor instanceof Error) { api.avisar(valor.message); form.elements.valor.focus(); return; }
     const reg = { data: api.hoje, medida, valor };
     const fora = avaliarRegistro(pac, reg, api.ctx.faixas);
-    api.atualizar(mudarPac(pac.id, (p) => registrar(p, reg)));
-    if (fora.length) api.avisar(`Fora da faixa: ${fora.map((a) => a.msg).join('; ')}`);
+    const ok = api.atualizar(mudarPac(pac.id, (p) => registrar(p, reg)));
+    if (ok && fora.length) api.avisar(`Fora da faixa: ${fora.map((a) => a.msg).join('; ')}`);
   }),
   'valor-apagar': comPac((pac, el, api) => {
     if (!globalThis.confirm('Apagar este valor?')) return;
     api.atualizar(mudarPac(pac.id, (p) => ({ ...p, registros: (p.registros ?? []).filter((r) => r.id !== el.dataset.reg) })));
   }),
-  // Provisório: a Task 16 troca por confirmação com "Gerar ficha antes" / "Copiar texto antes".
-  alta: comPac((pac, el, api) => {
-    if (!globalThis.confirm(`Remover leito ${pac.leito} do app? Isso não pode ser desfeito.`)) return;
-    api.atualizar((e) => ({ ...e, pac: e.pac.filter((p) => p.id !== pac.id) }));
-    api.avisar(`Leito ${pac.leito} removido.`);
-  }),
+  // Provisório e sem apagar nada: a Task 16 implementa a alta (ficha/texto antes de remover).
+  alta: (ev, el, api) => api.avisar('Alta/parto: disponível em breve.'),
 };

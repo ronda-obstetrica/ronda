@@ -3,7 +3,7 @@ import { hojeISO } from './nucleo/datas.js';
 import { carregar, salvar } from './nucleo/estado.js';
 import { contexto } from './nucleo/contexto.js';
 import { gerarPendenciasPorIG } from './nucleo/pendencias.js';
-import { esc, atualizarContador } from './ui/util.js';
+import { esc, atualizarContador, AVISO_FALHA_SALVAR } from './ui/util.js';
 import * as censo from './ui/censo.js';
 import * as formularios from './ui/formularios.js';
 
@@ -53,13 +53,17 @@ function fecharFolha() {
   document.body.classList.remove('folha-aberta');
 }
 
+// Devolve true se gravou (ou não precisava gravar). Em falha, o aviso de erro fica na tela:
+// quem chama só mostra aviso de sucesso quando recebe true.
 function atualizar(mutacao, { gravar = true } = {}) {
   const novo = mutacao(estado);
-  if (!novo) return;
+  if (!novo) return false;
   ctx = contexto(novo);
   estado = { ...novo, pac: novo.pac.map((p) => gerarPendenciasPorIG(p, hoje, ctx.regras)) };
-  if (gravar && !salvar(estado)) avisar('Não foi possível salvar — armazenamento cheio?');
+  const ok = !gravar || salvar(estado);
+  if (!ok) avisar(AVISO_FALHA_SALVAR);
   render();
+  return ok;
 }
 
 const api = {
@@ -119,7 +123,7 @@ function despachar(nome, ev, el) {
   if (!fn) return;
   try { fn(ev, el, api); } catch (e) {
     console.error(e);
-    avisar('Algo deu errado nessa ação. Os dados salvos não foram alterados.');
+    avisar('Algo deu errado. Recarregue a página; os dados já salvos continuam no aparelho.');
   }
 }
 

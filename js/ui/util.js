@@ -10,6 +10,8 @@ export function esc(txt) {
 // Já escapado: as datas vêm do estado, que pode ter sido restaurado de um backup.
 export const ddmm = (iso) => (iso ? esc(`${String(iso).slice(8, 10)}/${String(iso).slice(5, 7)}`) : '');
 
+export const AVISO_FALHA_SALVAR = 'Não foi possível salvar — armazenamento cheio?';
+
 export const AVISO_LGPD = 'Não escreva nomes ou dados que identifiquem a paciente.';
 
 export const acharPac = (estado, id) => estado.pac.find((p) => p.id === id);
