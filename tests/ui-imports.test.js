@@ -1,0 +1,66 @@
+// Garante que toda importação relativa em js/** aponta para um arquivo existente
+// (sem navegador, um caminho errado só apareceria ao abrir o app) e que os módulos de UI
+// importáveis no Node exportam o contrato render/acoes.
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { join, dirname, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const RAIZ = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+function arquivosJs(dir) {
+  return readdirSync(dir).flatMap((n) => {
+    const p = join(dir, n);
+    return statSync(p).isDirectory() ? arquivosJs(p) : n.endsWith('.js') ? [p] : [];
+  });
+}
+
+const RE_IMPORT = /(?:import|export)\s[^'"`]*?from\s*['"]([^'"]+)['"]|import\s*\(\s*['"]([^'"]+)['"]\s*\)|import\s+['"]([^'"]+)['"]/g;
+
+test('toda importação relativa em js/** resolve para um arquivo existente', () => {
+  const quebradas = [];
+  let total = 0;
+  for (const arq of arquivosJs(join(RAIZ, 'js'))) {
+    const src = readFileSync(arq, 'utf8');
+    for (const m of src.matchAll(RE_IMPORT)) {
+      const spec = m[1] ?? m[2] ?? m[3];
+      if (!spec.startsWith('.')) continue;
+      total++;
+      if (!existsSync(join(dirname(arq), spec))) quebradas.push(`${relative(RAIZ, arq)} → ${spec}`);
+    }
+  }
+  assert.ok(total > 20, `poucas importações encontradas (${total}); o scanner pode estar quebrado`);
+  assert.deepEqual(quebradas, []);
+});
+
+test('index.html carrega js/app.js como módulo e styles.css', () => {
+  const html = readFileSync(join(RAIZ, 'index.html'), 'utf8');
+  assert.match(html, /<script type="module" src="js\/app\.js"><\/script>/);
+  assert.match(html, /href="styles\.css"/);
+  assert.match(html, /lang="pt-BR"/);
+});
+
+test('censo.js exporta render e acoes (módulo sem DOM no topo)', async () => {
+  const censo = await import('../js/ui/censo.js');
+  assert.equal(typeof censo.render, 'function');
+  assert.equal(typeof censo.acoes, 'object');
+  for (const k of ['mod', 'alerta-feito', 'alerta-pend', 'pend-feito', 'pend-aguardando', 'registrar-valor', 'alta']) {
+    assert.equal(typeof censo.acoes[k], 'function', `falta a ação ${k}`);
+  }
+});
+
+test('formularios.js exporta acoes do cadastro e das folhas', async () => {
+  const f = await import('../js/ui/formularios.js');
+  for (const k of ['novo', 'editar', 'paciente-salvar', 'mod-op', 'alerta-feito-salvar', 'pend-feito-salvar']) {
+    assert.equal(typeof f.acoes[k], 'function', `falta a ação ${k}`);
+  }
+});
+
+test('nenhum campo de identificação no cadastro', async () => {
+  const { htmlCadastro } = await import('../js/ui/formularios.js');
+  const html = htmlCadastro(null, '2026-11-08').toLowerCase();
+  for (const proibido of ['nome', 'inicia', 'prontu', 'nascim', 'telefone', 'hospital']) {
+    assert.ok(!new RegExp(`name="[^"]*${proibido}`).test(html), `campo proibido: ${proibido}`);
+  }
+});
