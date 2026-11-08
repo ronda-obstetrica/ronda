@@ -113,3 +113,14 @@ test('visita.js exporta render e acoes (reusa os data-act do Censo) e está em T
   assert.match(src, /from '\.\/ui\/visita\.js'/);
   assert.match(src, /'abrir-visita':/);
 });
+
+test('aba Visita: "novo" (botão "+ Paciente" do estado vazio) está entre as ações ativas', async () => {
+  const f = await import('../js/ui/formularios.js');
+  const v = await import('../js/ui/visita.js');
+  const src = readFileSync(join(RAIZ, 'js', 'app.js'), 'utf8');
+  // acoesAtivas junta as globais, as de formularios (sempre) e as da tela atual.
+  assert.match(src, /const acoesAtivas = \(\) => \(\{ \.\.\.acoesGlobais, \.\.\.formularios\.acoes, \.\.\.\(TELAS\[aba\]\?\.acoes \?\? \{\}\) \}\)/);
+  const ativasNaVisita = { ...f.acoes, ...v.acoes };
+  assert.equal(typeof ativasNaVisita.novo, 'function');
+  assert.equal(ativasNaVisita.novo, f.acoes.novo, 'a visita não deve sobrescrever "novo"');
+});

@@ -156,7 +156,8 @@ export const acoes = {
     const trilho = el.closest('.visita')?.querySelector('.v-trilho');
     if (!trilho) return;
     const total = trilho.children.length;
-    const i = Math.max(0, Math.min(total - 1, indiceDoTrilho(trilho) + Number(el.dataset.dir)));
+    // Parte do leito marcado (não da posição da rolagem): toques rápidos seguidos não pulam nem repetem leito.
+    const i = Math.max(0, Math.min(total - 1, atualIndice + Number(el.dataset.dir)));
     trilho.scrollTo({ left: trilho.children[i].offsetLeft, behavior: reduzMovimento() ? 'auto' : 'smooth' });
     marcarAtual(trilho, i);
   },
