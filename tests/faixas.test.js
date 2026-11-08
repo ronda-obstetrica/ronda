@@ -75,3 +75,36 @@ test('registrar e foraDaFaixaHoje', () => {
   assert.deepEqual(avaliarRegistro(novaPaciente(), { medida: 'jejum', valor: 65 }, FAIXAS_GLOBAIS), []);
   assert.equal(MEDIDAS.length, 7);
 });
+
+test('limites exatos das faixas globais de glicemia', () => {
+  assert.deepEqual(ids(pac, 'jejum', 69), ['glic-hipo']);
+  assert.deepEqual(ids(pac, 'jejum', 70), []);
+  assert.deepEqual(ids(pac, 'jejum', 94), []);
+  assert.deepEqual(ids(pac, 'jejum', 95), ['glic-jejum']);
+  assert.deepEqual(ids(pac, 'pos-cafe', 139), []);
+  assert.deepEqual(ids(pac, 'pos-cafe', 140), ['glic-pos']);
+  assert.deepEqual(ids(pac, 'pos-jantar', 69), ['glic-hipo']);
+  assert.deepEqual(ids(pac, 'pos-jantar', 70), []);
+});
+
+test('limites exatos das faixas globais de pressão (140/90 e 160/110, dois lados)', () => {
+  assert.deepEqual(ids(pac, 'pa', { s: 139, d: 89 }), []);
+  assert.deepEqual(ids(pac, 'pa', { s: 140, d: 89 }), ['pa-alta']);
+  assert.deepEqual(ids(pac, 'pa', { s: 139, d: 90 }), ['pa-alta']);
+  assert.deepEqual(ids(pac, 'pa', { s: 140, d: 90 }), ['pa-alta']);
+  assert.deepEqual(ids(pac, 'pa', { s: 159, d: 109 }), ['pa-alta']);
+  assert.deepEqual(ids(pac, 'pa', { s: 160, d: 109 }), ['pa-crise']);
+  assert.deepEqual(ids(pac, 'pa', { s: 159, d: 110 }), ['pa-crise']);
+  assert.deepEqual(ids(pac, 'pa', { s: 160, d: 110 }), ['pa-crise']);
+});
+
+test('faixa vermelha e amarela na mesma glicemia: a vermelha suprime a amarela', () => {
+  const { itens } = parseFaixas(`
+glic-jejum-alto | dmg | jejum | >=95 | amarelo | Jejum acima da meta | teste
+glic-jejum-grave | dmg | jejum | >=200 | vermelho | Jejum muito alto | teste
+`);
+  const av = (v) => avaliarRegistro(pac, { medida: 'jejum', valor: v }, itens);
+  assert.deepEqual(av(150).map(a => a.faixaId), ['glic-jejum-alto']);
+  assert.deepEqual(av(200).map(a => a.faixaId), ['glic-jejum-grave']);
+  assert.equal(av(200)[0].nivel, 'vermelho');
+});
