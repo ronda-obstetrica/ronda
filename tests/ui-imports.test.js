@@ -64,3 +64,27 @@ test('nenhum campo de identificação no cadastro', async () => {
     assert.ok(!new RegExp(`name="[^"]*${proibido}`).test(html), `campo proibido: ${proibido}`);
   }
 });
+
+test('telas da Task 14 exportam render e acoes (módulos sem DOM no topo)', async () => {
+  const esperadas = {
+    hoje: ['alerta-feito', 'alerta-pend', 'pend-feito', 'pend-aguardando', 'pend-desfazer', 'pend-dose'],
+    plantao: ['plantao-copiar', 'plantao-pdf', 'plantao-planilha'],
+    protocolos: ['prot-salvar', 'prot-validar', 'ver-globais', 'copiar-globais'],
+    dados: ['backup-exportar', 'backup-restaurar', 'apagar-exemplos', 'apagar-tudo'],
+  };
+  for (const [nome, acoes] of Object.entries(esperadas)) {
+    const m = await import(`../js/ui/${nome}.js`);
+    assert.equal(typeof m.render, 'function', `${nome}.render`);
+    assert.equal(typeof m.acoes, 'object', `${nome}.acoes`);
+    for (const k of acoes) assert.equal(typeof m.acoes[k], 'function', `${nome}: falta a ação ${k}`);
+  }
+  const censo = await import('../js/ui/censo.js');
+  for (const k of ['pend-nova', 'pend-nova-salvar']) assert.equal(typeof censo.acoes[k], 'function', `censo: falta ${k}`);
+});
+
+test('app.js registra as telas da Task 14 em TELAS', () => {
+  const src = readFileSync(join(RAIZ, 'js', 'app.js'), 'utf8');
+  for (const n of ['hoje', 'plantao', 'protocolos', 'dados']) assert.match(src, new RegExp(`from '\./ui/${n}\.js'`));
+  assert.match(src, /const TELAS = \{ censo, hoje: telaHoje, plantao, protocolos, dados \}/);
+  assert.doesNotMatch(src, /xlsx/i, 'a biblioteca da planilha não carrega na partida');
+});

@@ -1,7 +1,8 @@
 // Aba Censo: um cartão por leito, em ordem natural, com ações por toque.
-import { acharPac, mudarPac } from './util.js';
+import { acharPac, mudarPac, ddmm } from './util.js';
 import { htmlCartao } from './cartao.js';
 import { htmlFeitoAlerta, htmlFeitoPend, htmlEscolha } from './formularios.js';
+import { acoes as acoesPend } from './pendform.js';
 import { ordenarPacientes, precisaLembrarBackup } from '../nucleo/estado.js';
 import { DIAGNOSTICOS, alternarMod } from '../nucleo/diagnosticos.js';
 import { avaliarAlertas, desfazerAlertaFeito } from '../nucleo/alertas.js';
@@ -15,10 +16,17 @@ export function htmlBannerErros(ctx) {
   return `<button type="button" class="banner banner-erro" data-act="aba" data-aba="protocolos">⚠ ${txt}</button>`;
 }
 
+// Lembrete discreto: o iOS pode apagar os dados do site; o backup fica com a usuária.
+export function htmlLembreteBackup(estado, hoje) {
+  if (!precisaLembrarBackup(estado, hoje)) return '';
+  const quando = estado.ultimoBackup ? `Último backup em ${ddmm(estado.ultimoBackup)}.` : 'Nenhum backup feito ainda.';
+  return `<div class="banner banner-aviso banner-linha"><span>${quando} Os dados ficam só neste aparelho.</span>
+    <button type="button" class="sec mini" data-act="aba" data-aba="dados">Fazer backup</button></div>`;
+}
+
 export function htmlCenso({ estado, ctx, hoje }, agora = new Date()) {
   const pacs = ordenarPacientes(estado.pac);
-  const backup = precisaLembrarBackup(estado, hoje)
-    ? '<button type="button" class="banner banner-aviso" data-act="aba" data-aba="dados">Faça o backup dos dados (aba Dados).</button>' : '';
+  const backup = htmlLembreteBackup(estado, hoje);
   const exemplos = pacs.some((p) => p.ex)
     ? '<p class="nota">Os leitos marcados como "exemplo" são fictícios. Eles podem ser apagados na aba Dados.</p>' : '';
   const cartoes = pacs.length
@@ -41,6 +49,7 @@ const comPac = (fn) => (ev, el, api) => {
 };
 
 export const acoes = {
+  ...acoesPend,
   // Liga/desliga direto; nas escolhas, abre a lista pequena na folha.
   mod: comPac((pac, el, api) => {
     const i = Number(el.dataset.i);

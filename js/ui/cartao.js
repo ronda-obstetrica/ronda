@@ -101,15 +101,17 @@ function htmlControles(pac, hoje, ctx) {
   </section>`;
 }
 
-function htmlPend(pac, p, tipo, agora) {
+// comLeito: na aba Hoje, cada item mostra o leito.
+export function htmlPend(pac, p, tipo, agora, comLeito = false) {
   const d = { id: pac.id, pend: p.id };
+  const leito = comLeito ? `<b class="pend-leito">Leito ${esc(pac.leito)}</b> ` : '';
   const prog = progressoTratamento(p, agora);
   let prefixo = '';
   if (tipo === 'atrasada') prefixo = `<span class="prefixo">ATRASADA ${p.diasAtraso}d:</span> `;
   if (tipo === 'aguardando') prefixo = `<span class="prefixo">AGUARDANDO resultado${p.aguardandoDesde ? ` (desde ${ddmm(p.aguardandoDesde)})` : ''}:</span> `;
   if (tipo === 'feita') {
     return `<li class="pend feita"><span class="check-feito" aria-hidden="true">✓</span>
-      <span class="pend-txt">${esc(p.texto)}${p.res ? ` — ${esc(p.res)}` : ''} <span class="cat">feito ${ddmm(p.doneAt)}</span></span>
+      <span class="pend-txt">${leito}${esc(p.texto)}${p.res ? ` — ${esc(p.res)}` : ''} <span class="cat">feito ${ddmm(p.doneAt)}</span></span>
       ${btn('pend-desfazer', d, 'Desfazer', ' class="sec"')}</li>`;
   }
   const extras = [];
@@ -117,7 +119,7 @@ function htmlPend(pac, p, tipo, agora) {
   if (prog && p.dur?.unidade === 'doses' && !prog.terminado) extras.push(btn('pend-dose', d, 'Registrar dose', ' class="sec"'));
   return `<li class="pend ${tipo}">
     ${btn('pend-feito', d, '☐', ` class="check" aria-label="Marcar feito: ${esc(p.texto)}"`)}
-    <span class="pend-txt">${prefixo}${esc(p.texto)} <span class="cat">${esc(p.cat)}</span>${prog ? ` <span class="prog">${esc(prog.texto)}</span>` : ''}</span>
+    <span class="pend-txt">${leito}${prefixo}${esc(p.texto)} <span class="cat">${esc(p.cat)}</span>${prog ? ` <span class="prog">${esc(prog.texto)}</span>` : ''}</span>
     ${extras.length ? `<div class="acoes-linha">${extras.join('')}</div>` : ''}
   </li>`;
 }
@@ -130,7 +132,7 @@ function htmlPendencias(pac, hoje, agora) {
     ...cl.aguardando.map((p) => htmlPend(pac, p, 'aguardando', agora)),
     ...cl.concluidasHoje.map((p) => htmlPend(pac, p, 'feita', agora)),
   ].join('');
-  return `<section class="bloco"><h3>Pendências</h3>
+  return `<section class="bloco"><div class="bloco-cab"><h3>Pendências</h3>${btn('pend-nova', { id: pac.id }, '+ pendência', ' class="sec mini"')}</div>
     ${itens ? `<ul class="pends">${itens}</ul>` : '<p class="vazio-linha">Sem pendências para hoje.</p>'}
   </section>`;
 }

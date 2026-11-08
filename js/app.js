@@ -5,11 +5,14 @@ import { contexto } from './nucleo/contexto.js';
 import { gerarPendenciasPorIG } from './nucleo/pendencias.js';
 import { esc, atualizarContador, AVISO_FALHA_SALVAR } from './ui/util.js';
 import * as censo from './ui/censo.js';
+import * as telaHoje from './ui/hoje.js';
+import * as plantao from './ui/plantao.js';
+import * as protocolos from './ui/protocolos.js';
+import * as dados from './ui/dados.js';
 import * as formularios from './ui/formularios.js';
 
-// Registro das telas. As Tasks 14–15 acrescentam hoje, visita, plantao, protocolos e dados.
-// Abas sem módulo aqui mostram "Em construção" (nada é importado estaticamente antes de existir).
-const TELAS = { censo };
+// Registro das telas. A Task 15 acrescenta a visita; até lá a aba mostra "Em construção".
+const TELAS = { censo, hoje: telaHoje, plantao, protocolos, dados };
 
 const ABAS = [
   ['censo', 'Censo'], ['hoje', 'Hoje'], ['visita', 'Visita'],

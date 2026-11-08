@@ -265,3 +265,26 @@ ul.alertas, ul.pends, ul.registros { list-style: none; margin: 0; padding: 0; di
   padding: 12px 14px; border-radius: 10px; font-weight: 600;
   box-shadow: 0 6px 20px rgb(0 0 0 / .25);
 }
+
+/* ---------- Task 14: Hoje, Plantão, Protocolos, Dados ---------- */
+button.mini { font-size: .85rem; padding: 4px 10px; }
+.bloco-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.banner-linha { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid var(--amber); }
+.banner-linha .mini { color: var(--amber); border-color: var(--amber); }
+p.banner { padding: 10px 12px; border: 1px solid var(--amber); font-weight: 600; }
+.pend-leito { font-family: var(--mono); white-space: nowrap; }
+.grupo-atrasadas h3 { color: var(--red); }
+.grupo-aguardando h3 { color: var(--amber); }
+.sec-tit { font-size: 1.05rem; }
+.acoes-plantao { gap: 8px; }
+textarea.previa { font-family: var(--mono); font-size: .85rem; width: 100%; color: var(--text); }
+.editor { display: grid; gap: 6px; }
+.editor textarea { font-family: var(--mono); font-size: .85rem; width: 100%; }
+.erros-tit { color: var(--red); font-weight: 600; font-size: .9rem; }
+.erros-lista { margin: 0; padding-left: 18px; color: var(--red); font-size: .85rem; font-family: var(--mono); }
+.prot-dx { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; background: var(--surface); }
+.prot-dx summary { cursor: pointer; min-height: 32px; display: list-item; }
+.prot-dx[open] summary { margin-bottom: 8px; }
+code { font-family: var(--mono); font-size: .85em; overflow-wrap: anywhere; }
+.restaurar, .apagar-tudo { display: grid; gap: 8px; }
+.apagar-tudo { margin-top: 8px; }

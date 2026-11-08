@@ -70,6 +70,11 @@ function parseDuracao(txt) {
   return null;
 }
 
+// Mesma validação de duração do protocolo (usada também pela pendência manual).
+export function lerDuracao(txt) {
+  return parseDuracao(String(txt ?? '').trim());
+}
+
 export function parseProtocolo(texto) {
   const itens = [], erros = [];
   for (const { n, campos } of dividirLinhas(texto)) {
@@ -119,7 +124,7 @@ const abertaComChave = (lista, p) => {
 
 const mapPend = (pac, id, fn) => ({ ...pac, pend: pac.pend.map((p) => (p.id === id ? fn(p) : p)) });
 
-function inicioDur(dur, due) {
+export function inicioDur(dur, due) {
   const base = { ...dur, inicio: dur.unidade === 'horas' ? `${due}T08:00` : due };
   if (dur.unidade === 'doses') base.doses = [];
   return base;
