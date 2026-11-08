@@ -32,13 +32,13 @@ function ficha(pac, hoje, ctx, agora) {
   if (r.dia !== null) cab.push(`D${r.dia}`);
   const sub = [r.idade !== null && r.idade !== '' ? `${esc(r.idade)}a` : null, r.gpca ? esc(r.gpca) : null].filter(Boolean).join(' ');
   const feitos = r.linhaTempo.filter((e) => e.tipo !== 'internacao');
-  const recentes = feitos.slice(-5).reverse().map((e) => `${ddmm(e.data)} ${esc(e.texto)}`);
+  const recentes = feitos.slice(-5).reverse().map((e) => `${esc(ddmm(e.data))} ${esc(e.texto)}`);
   if (feitos.length > 5) recentes.push(`+${feitos.length - 5} anteriores`);
   const hojeItens = [
     ...r.atrasadas.map((p) => `☐ ${esc(p.texto)} <b>ATRASADO ${p.diasAtraso}d</b>`),
     ...r.hoje.map((p) => `☐ ${esc(p.texto)}`),
   ];
-  const aguardando = r.aguardando.map((p) => esc(p.texto) + (p.aguardandoDesde ? ` (desde ${ddmm(p.aguardandoDesde)})` : ''));
+  const aguardando = r.aguardando.map((p) => esc(p.texto) + (p.aguardandoDesde ? ` (desde ${esc(ddmm(p.aguardandoDesde))})` : ''));
   return `<article class="ficha">
 <header><h3>${cab.join(' · ')}</h3>${sub ? `<p class="f-sub">${sub}</p>` : ''}</header>
 ${r.dxExtenso.length ? `<p class="f-dx">${r.dxExtenso.map(esc).join('; ')}</p>` : ''}

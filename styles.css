@@ -337,6 +337,7 @@ code { font-family: var(--mono); font-size: .85em; overflow-wrap: anywhere; }
 @media print {
   @page { size: A4 portrait; margin: 8mm; }
   body > *:not(#impressao) { display: none !important; }
+  body.folha-aberta { overflow: visible !important; }
   html, body { background: #fff !important; color: #000 !important; }
   #impressao { display: block; font-family: var(--fonte); font-size: 8.5pt; line-height: 1.25; color: #000; }
   .f-topo { font-size: 9pt; padding-bottom: 3mm; border-bottom: 1px solid #000; margin-bottom: 3mm; }

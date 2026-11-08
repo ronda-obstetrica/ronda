@@ -55,3 +55,11 @@ test('atrasada leva ATRASADO Nd; regra do serviço aparece no rodapé', () => {
   const e = mk([p], { regrasServico: 'res-colestase | colestase!ab100 | 37+0 | 37+6 | vermelho | HU-X | HU-X 2025' });
   assert.ok(gerar(e).includes('Regras do serviço'));
 });
+test('datas de backup malicioso são escapadas', () => {
+  const xss = '2026-<&-<&';
+  const p = novaPaciente({ id: 'x', leito: '01', int: '2026-10-30', igDays: 200, igRef: HOJE, alertasFeitos: [{ id: 'corticoide', data: xss, res: '' }],
+    pend: [novaPendencia({ id: 'a', texto: 'Ex', cat: 'Exame', due: HOJE, estadoExame: 'aguardando', aguardandoDesde: xss })] });
+  const h = gerar(mk([p]));
+  assert.ok(!h.includes('<&'));
+  assert.ok(h.includes('&lt;&amp;'));
+});

@@ -1,12 +1,11 @@
 // Aba Censo: um cartão por leito, em ordem natural, com ações por toque.
-import { acharPac, mudarPac, ddmm } from './util.js';
+import { acharPac, mudarPac, ddmm, esc } from './util.js';
 import { htmlCartao } from './cartao.js';
 import { htmlFeitoAlerta, htmlFeitoPend, htmlEscolha } from './formularios.js';
 import { htmlFichas } from '../relatorios/ficha.js';
 import { textoPlantao } from '../relatorios/texto.js';
 import { imprimirHtml } from './imprimir.js';
 import { copiarTexto } from './compartilhar.js';
-import { esc } from './util.js';
 import { acoes as acoesPend } from './pendform.js';
 import { ordenarPacientes, precisaLembrarBackup } from '../nucleo/estado.js';
 import { DIAGNOSTICOS, alternarMod } from '../nucleo/diagnosticos.js';
