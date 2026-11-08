@@ -65,7 +65,7 @@ test('chaveFeito e registro compartilhado do corticoide', () => {
 test('contexto: regra do serviço substitui a global e herda antecedência 7', () => {
   const estado = { ...novoEstado(), regrasServico: 'res-colestase | colestase!ab100 | 37+0 | 37+6 | vermelho | HU-X | HU-X 2025' };
   const c = contexto(estado);
-  assert.deepEqual(c.faixas, []);
+  assert.deepEqual(c.faixas.map(f => f.id), ['glic-hipo', 'glic-jejum', 'glic-pos', 'pa-crise', 'pa-alta']);
   assert.deepEqual(c.errosRegras, []);
   const r = c.regras.find(x => x.id === 'res-colestase');
   assert.equal(r.ini, 37 * 7);

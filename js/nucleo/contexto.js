@@ -1,13 +1,15 @@
-// Contexto de avaliação: regras globais mescladas com as do serviço.
+// Contexto de avaliação: regras e faixas globais mescladas com as do serviço.
 import { parseRegras, REGRAS_GLOBAIS } from './regras.js';
+import { parseFaixas, FAIXAS_GLOBAIS } from './faixas.js';
 import { mesclarPorId } from './textoregras.js';
 
 export function contexto(estado) {
   const { itens, desligar, erros } = parseRegras(estado.regrasServico ?? '');
+  const fx = parseFaixas(estado.faixasServico ?? '');
   return {
     regras: mesclarPorId(REGRAS_GLOBAIS, { itens, desligar }),
-    faixas: [],
+    faixas: mesclarPorId(FAIXAS_GLOBAIS, { itens: fx.itens, desligar: fx.desligar }, []),
     errosRegras: erros,
-    errosFaixas: [],
+    errosFaixas: fx.erros,
   };
 }
