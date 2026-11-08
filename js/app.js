@@ -1,6 +1,6 @@
 // Casca do app: estado em módulo, roteamento das abas, folha inferior, avisos e delegação de eventos.
 import { hojeISO } from './nucleo/datas.js';
-import { carregar, salvar } from './nucleo/estado.js';
+import { carregar, salvar, lerBruto, mudouFora, CHAVE } from './nucleo/estado.js';
 import { contexto } from './nucleo/contexto.js';
 import { gerarPendenciasPorIG } from './nucleo/pendencias.js';
 import { esc, atualizarContador, AVISO_FALHA_SALVAR } from './ui/util.js';
@@ -26,6 +26,10 @@ let estado;
 let ctx;
 let hoje = hojeISO();
 let aba = 'censo';
+// Último texto que esta janela leu ou gravou; serve para detectar gravações de outra janela.
+let ultimoJson = null;
+// Leitura do armazenamento falhou: o app só mostra dados vazios e não grava (não apaga o que existe).
+let somenteLeitura = false;
 
 const $ = (sel) => document.querySelector(sel);
 const raiz = $('#tela');
@@ -34,11 +38,11 @@ const folhaCorpo = $('#folha-corpo');
 const caixaAviso = $('#aviso');
 let timerAviso = null;
 
-function avisar(msg) {
+function avisar(msg, fixo = false) {
   caixaAviso.textContent = msg;
   caixaAviso.hidden = false;
   clearTimeout(timerAviso);
-  timerAviso = setTimeout(() => { caixaAviso.hidden = true; }, 5000);
+  if (!fixo) timerAviso = setTimeout(() => { caixaAviso.hidden = true; }, 5000);
 }
 
 // Todo HTML recebido aqui foi montado pelos módulos de UI com textos escapados por esc().
@@ -78,8 +82,13 @@ function atualizar(mutacao, { gravar = true } = {}) {
   }
   estado = novoEstado;
   ctx = novoCtx;
+  if (gravar && somenteLeitura) {
+    avisar('Não foi possível ler os dados deste aparelho; nada é gravado. Recarregue a página.', true);
+    return false;
+  }
   const ok = !gravar || salvar(estado);
   if (!ok) avisar(AVISO_FALHA_SALVAR);
+  else if (gravar) ultimoJson = JSON.stringify(estado);
   return ok;
 }
 
@@ -164,9 +173,28 @@ document.addEventListener('submit', (ev) => {
 document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Escape' && !folha.hidden) fecharFolha();
 });
+// Outra janela/aba (ex.: app instalado + navegador) gravou: adota o que está guardado antes de
+// qualquer gravação desta janela, para não sobrescrever dados mais novos com um estado velho.
+function sincronizarComArmazenamento() {
+  if (somenteLeitura) return;
+  const guardado = lerBruto();
+  if (!mudouFora(guardado, ultimoJson)) return;
+  const c = carregar();
+  if (c.leituraFalhou || c.aviso) return;
+  if (atualizar(() => c.estado, { gravar: false })) {
+    ultimoJson = guardado;
+    avisar('Dados atualizados em outra janela do app.');
+  }
+}
+
+window.addEventListener('storage', (ev) => {
+  if (ev.key === null || ev.key === CHAVE) sincronizarComArmazenamento();
+});
+
 // App aberto de um dia para o outro: recalcula "hoje" (IG, pendências por IG, atrasos).
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState !== 'visible') return;
+  sincronizarComArmazenamento();
   const agora = hojeISO();
   if (agora !== hoje) { hoje = agora; atualizar((e) => e); }
 });
@@ -179,5 +207,7 @@ if (ABAS.some(([id]) => id === inicial)) aba = inicial;
 const carregado = carregar();
 estado = carregado.estado;
 // Com dados corrompidos, não grava na partida: o texto original só é sobrescrito numa alteração da usuária.
+somenteLeitura = !!carregado.leituraFalhou;
 atualizar((e) => e, { gravar: !carregado.aviso });
-if (carregado.aviso) avisar(carregado.aviso);
+ultimoJson = lerBruto();
+if (carregado.aviso) avisar(carregado.aviso, somenteLeitura);

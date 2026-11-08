@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {
   CHAVE, CHAVE_CORROMPIDO, novoEstado, carregar, salvar, novaPaciente, cortar,
   seedExemplos, apagarExemplos, exportarJSON, importarJSON, ordenarPacientes,
-  precisaLembrarBackup,
+  precisaLembrarBackup, lerBruto, mudouFora,
 } from '../js/nucleo/estado.js';
 import { igHoje } from '../js/nucleo/datas.js';
 
@@ -103,4 +103,33 @@ test('precisaLembrarBackup', () => {
   assert.equal(precisaLembrarBackup(e, h), false);
   e.ultimoBackup = '2026-10-30';
   assert.equal(precisaLembrarBackup(e, h), true);
+});
+
+test('carregar: getItem que lança não vira tela em branco nem grava por cima', () => {
+  const st = { getItem() { throw new Error('bloqueado'); }, setItem() { throw new Error('não deve gravar'); } };
+  const r = carregar(st);
+  assert.equal(r.leituraFalhou, true);
+  assert.match(r.aviso, /não foi possível ler/i);
+  assert.deepEqual(r.estado.pac, []);
+});
+
+test('carregar: acessor do storage ausente (null) também não lança', () => {
+  const r = carregar(null);
+  assert.equal(r.leituraFalhou, true);
+  assert.ok(r.aviso);
+  assert.equal(salvar(novoEstado(), null), false);
+  assert.equal(lerBruto(null), null);
+});
+
+test('lerBruto devolve o texto guardado ou null', () => {
+  assert.equal(lerBruto(fake({ [CHAVE]: '{"a":1}' })), '{"a":1}');
+  assert.equal(lerBruto(fake()), null);
+  assert.equal(lerBruto({ getItem() { throw new Error('x'); } }), null);
+});
+
+test('mudouFora: só quando há texto guardado diferente do último desta janela', () => {
+  assert.equal(mudouFora('{"a":2}', '{"a":1}'), true);
+  assert.equal(mudouFora('{"a":1}', '{"a":1}'), false);
+  assert.equal(mudouFora(null, '{"a":1}'), false);
+  assert.equal(mudouFora('{"a":1}', null), true);
 });

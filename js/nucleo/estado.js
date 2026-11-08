@@ -61,9 +61,33 @@ function formatoValido(e) {
   return !!e && typeof e === 'object' && e.v === 2 && Array.isArray(e.pac);
 }
 
-export function carregar(storage = globalThis.localStorage) {
+// O próprio acesso a localStorage pode lançar (ex.: bloqueio de cookies); nesse caso devolve null.
+function armazenamento() {
+  try { return globalThis.localStorage ?? null; } catch { return null; }
+}
+
+export function lerBruto(storage = armazenamento()) {
+  try { return storage ? storage.getItem(CHAVE) : null; } catch { return null; }
+}
+
+// Outra janela gravou algo diferente do que esta janela leu/gravou por último?
+export function mudouFora(armazenado, ultimo) {
+  return armazenado != null && armazenado !== ultimo;
+}
+
+export function carregar(storage = armazenamento()) {
   let bruto = null;
-  try { bruto = storage.getItem(CHAVE); } catch { bruto = null; }
+  try {
+    if (!storage) throw new Error('sem armazenamento');
+    bruto = storage.getItem(CHAVE);
+  } catch {
+    // Não dá para saber o que há guardado: estado vazio, e o app não grava por cima.
+    return {
+      estado: novoEstado(),
+      aviso: 'Não foi possível ler os dados salvos neste aparelho. Nada será gravado até recarregar a página.',
+      leituraFalhou: true,
+    };
+  }
   if (bruto == null) {
     const estado = novoEstado();
     estado.pac = seedExemplos(hojeISO());
@@ -84,7 +108,7 @@ export function carregar(storage = globalThis.localStorage) {
   };
 }
 
-export function salvar(estado, storage = globalThis.localStorage) {
+export function salvar(estado, storage = armazenamento()) {
   try { storage.setItem(CHAVE, JSON.stringify(estado)); return true; } catch { return false; }
 }
 
