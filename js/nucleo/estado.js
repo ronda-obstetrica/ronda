@@ -1,6 +1,6 @@
 // Estado v2: modelo, persistência, seed, backup e ordenação de leitos.
 import { hojeISO, addDias, diffDias } from './datas.js';
-// TODO(Task 8): importar PROT_PADRAO de pendencias.js e usar em novoEstado().
+import { PROT_PADRAO } from './pendencias.js';
 
 export const CHAVE = 'ronda-obstetrica-v2';
 export const CHAVE_CORROMPIDO = 'ronda-obstetrica-v2-corrompido';
@@ -10,7 +10,7 @@ export const LIMITE_RES = 80;
 export function novoEstado() {
   return {
     v: 2,
-    prot: {}, // Task 8: trocar por cópia de PROT_PADRAO
+    prot: { ...PROT_PADRAO },
     regrasServico: '',
     faixasServico: '',
     pac: [],
