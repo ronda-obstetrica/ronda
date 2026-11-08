@@ -6,6 +6,8 @@ import { casaAlvo, especificidade, grupo } from './textoregras.js';
 const JANELA_ENCERRADA_DIAS = 7;
 const ORDEM_NIVEL = { vermelho: 0, amarelo: 1, cinza: 2 };
 
+export const chaveFeito = (id) => (id === 'corticoide' || id.startsWith('corticoide-') ? 'corticoide' : id);
+
 const ddmm = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 
 function candidatas(pac, regras) {
@@ -47,13 +49,17 @@ export function avaliarAlertas(pac, hoje, regras) {
   if (ig === null) return [];
   const feitos = pac.alertasFeitos || [];
   const vistos = new Set();
+  let temCorticoide = false;
   const saida = [];
   const iniPorId = new Map();
   for (const r of candidatas(pac, regras)) {
     if (vistos.has(r.id)) continue;
     vistos.add(r.id);
-    const a = avaliarRegra(r, ig, feitos.find(f => f.id === r.id));
+    const chave = chaveFeito(r.id);
+    if (chave === 'corticoide' && temCorticoide) continue;
+    const a = avaliarRegra(r, ig, feitos.find(f => f.id === chave));
     if (!a) continue;
+    if (chave === 'corticoide') temCorticoide = true;
     saida.push(a);
     if (r.tipo === 'resolucao' && a.estado !== 'feito' && a.estado !== 'encerrado') iniPorId.set(a, r.ini);
   }
@@ -64,12 +70,13 @@ export function avaliarAlertas(pac, hoje, regras) {
 }
 
 export function registrarAlertaFeito(pac, regraId, data, res = '') {
-  const outros = (pac.alertasFeitos || []).filter(f => f.id !== regraId);
-  return { ...pac, alertasFeitos: [...outros, { id: regraId, data, res: cortar(res, LIMITE_RES) }] };
+  const chave = chaveFeito(regraId);
+  const outros = (pac.alertasFeitos || []).filter(f => f.id !== chave);
+  return { ...pac, alertasFeitos: [...outros, { id: chave, data, res: cortar(res, LIMITE_RES) }] };
 }
 
 export function desfazerAlertaFeito(pac, regraId) {
-  return { ...pac, alertasFeitos: (pac.alertasFeitos || []).filter(f => f.id !== regraId) };
+  return { ...pac, alertasFeitos: (pac.alertasFeitos || []).filter(f => f.id !== chaveFeito(regraId)) };
 }
 
 export function ordenarAlertas(alertas) {
