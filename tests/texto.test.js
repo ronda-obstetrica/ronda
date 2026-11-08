@@ -8,7 +8,8 @@ import { contexto } from '../js/nucleo/contexto.js';
 
 const HOJE = '2026-11-04';
 const mkEst = (pac) => ({ ...novoEstado(), pac });
-const gerar = (e) => textoPlantao(e, HOJE, contexto(e));
+const AGORA = new Date(HOJE + 'T12:00');
+const gerar = (e, agora = AGORA) => textoPlantao(e, HOJE, contexto(e), agora);
 const blocos = (t) => t.split('\n\n').slice(1);
 
 test('cabeçalho exato e ordem dos blocos', () => {
@@ -50,7 +51,7 @@ test('bloco completo do leito 04', () => {
 test('resumoPaciente e linhaDoTempo', () => {
   const [p4] = seedExemplos(HOJE);
   const e = mkEst([p4]);
-  const r = resumoPaciente(p4, HOJE, contexto(e));
+  const r = resumoPaciente(p4, HOJE, contexto(e), AGORA);
   assert.equal(r.ig, '31+2'); assert.equal(r.dia, 7); assert.equal(r.gpca, 'G2P1C1A0');
   assert.equal(linhaDoTempo(p4)[0].texto, 'Internação');
 });
@@ -101,6 +102,17 @@ test('copiar duas vezes no mesmo dia mantém o Mudou; no dia seguinte compara co
   assert.equal(linhaDe(gerar(copia1), 'Mudou: '), MUDOU);
   const copia2 = marcarPlantao(copia1, HOJE, contexto(copia1));
   assert.equal(linhaDe(gerar(copia2), 'Mudou: '), MUDOU);
-  const amanha = textoPlantao(copia2, '2026-11-05', contexto(copia2));
+  const amanha = textoPlantao(copia2, '2026-11-05', contexto(copia2), new Date('2026-11-05T12:00'));
   assert.ok(!amanha.includes('Mudou:'), 'no dia seguinte a base é o snap de hoje (sem mudança)');
+});
+
+test('MgSO₄ 24h iniciado 08:00 não está concluído às 10:00 e mostra as horas reais', () => {
+  const pend = [novaPendencia({ id: 'm', texto: 'MgSO₄ 24h', dur: { total: 24, unidade: 'horas', inicio: HOJE + 'T08:00' } })];
+  const e = mkEst([base({ pend })]);
+  const cedo = gerar(e, new Date(HOJE + 'T10:00'));
+  assert.ok(cedo.includes('Tratamentos: MgSO₄ 24h 2h/24h'));
+  assert.ok(!cedo.includes('concluído'));
+  const depois = gerar(e, new Date('2026-11-05T09:00'));
+  assert.ok(depois.includes('MgSO₄ 24h 25h/24h'));
+  assert.ok(depois.includes('MgSO₄ 24h concluído'));
 });

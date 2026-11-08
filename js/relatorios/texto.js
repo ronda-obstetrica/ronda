@@ -7,8 +7,8 @@ const ddmm = iso => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 const dmy = iso => `${ddmm(iso)}/${iso.slice(0, 4)}`;
 const MARCA = { vermelho: '⚠ ', amarelo: '• ', cinza: '✓ ' };
 
-function bloco(pac, hoje, ctx, mudou) {
-  const r = resumoPaciente(pac, hoje, ctx);
+function bloco(pac, hoje, ctx, mudou, agora) {
+  const r = resumoPaciente(pac, hoje, ctx, agora);
   const cab = [`LEITO ${r.leito}`, r.ig === 'IG não informada' ? r.ig : `IG ${r.ig}`];
   if (r.dia !== null) cab.push(`D${r.dia}`);
   if (r.idade !== null && r.idade !== '') cab.push(`${r.idade}a`);
@@ -39,10 +39,11 @@ function bloco(pac, hoje, ctx, mudou) {
   return L.join('\n');
 }
 
-export function textoPlantao(estado, hoje, ctx) {
+// `agora`: instante real, para o contador "Xh/24h" e o "concluído" dos tratamentos por hora.
+export function textoPlantao(estado, hoje, ctx, agora = new Date()) {
   const base = baseComparacao(estado, hoje);
   const mud = base ? mudancasDesde(base, instantaneo(estado, hoje, ctx), estado, hoje, ctx) : {};
-  const blocos = ordenarPacientes(estado.pac).map(p => bloco(p, hoje, ctx, mud[p.id]));
+  const blocos = ordenarPacientes(estado.pac).map(p => bloco(p, hoje, ctx, mud[p.id], agora));
   return [
     `PASSAGEM DE PLANTÃO — Enfermaria de alto risco — ${dmy(hoje)}`,
     '(sem identificação de pacientes)',

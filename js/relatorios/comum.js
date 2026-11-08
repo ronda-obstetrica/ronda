@@ -50,7 +50,7 @@ export function linhaDoTempo(pac, agora) {
 
 const fmtValor = v => (v && typeof v === 'object' ? `${v.s}x${v.d}` : String(v));
 
-export function resumoPaciente(pac, hoje, ctx, agora = new Date(hoje + 'T12:00')) {
+export function resumoPaciente(pac, hoje, ctx, agora = new Date()) {
   const ig = igHoje(pac, hoje);
   const cl = classificarHoje(pac, hoje);
   const gpca = [pac.g, pac.p, pac.c, pac.a];

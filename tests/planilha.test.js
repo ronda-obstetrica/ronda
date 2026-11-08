@@ -8,7 +8,7 @@ import { contexto } from '../js/nucleo/contexto.js';
 
 const HOJE = '2026-11-04';
 const mkEst = (pac) => ({ ...novoEstado(), pac });
-const gerar = (e) => linhasPlanilha(e, HOJE, contexto(e));
+const gerar = (e) => linhasPlanilha(e, HOJE, contexto(e), new Date(HOJE + 'T12:00'));
 const col = (linhas, nome, i) => linhas[i][COLUNAS.indexOf(nome)];
 
 test('partesExtenso inclui o tipo da DHEG', () => {

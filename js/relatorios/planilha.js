@@ -8,8 +8,8 @@ export const COLUNAS = ['Leito', 'Idade', 'G/P/C/A', 'IG hoje', 'Dia de internaÃ
 const juntar = (v) => v.join('; ');
 const txt = (v) => (v === null || v === undefined ? '' : String(v));
 
-function linha(pac, hoje, ctx) {
-  const r = resumoPaciente(pac, hoje, ctx);
+function linha(pac, hoje, ctx, agora) {
+  const r = resumoPaciente(pac, hoje, ctx, agora);
   const abertas = pac.pend.filter(p => !p.done && !(p.cat === 'Exame' && p.estadoExame === 'aguardando') && p.due >= hoje);
   return [
     r.leito,
@@ -30,8 +30,8 @@ function linha(pac, hoje, ctx) {
   ].map(txt);
 }
 
-export function linhasPlanilha(estado, hoje, ctx) {
-  return [[...COLUNAS], ...ordenarPacientes(estado.pac).map(p => linha(p, hoje, ctx))];
+export function linhasPlanilha(estado, hoje, ctx, agora = new Date()) {
+  return [[...COLUNAS], ...ordenarPacientes(estado.pac).map(p => linha(p, hoje, ctx, agora))];
 }
 
 export function gerarXlsx(linhas, XLSX = globalThis.XLSX) {
