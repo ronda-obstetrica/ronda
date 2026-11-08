@@ -47,7 +47,7 @@ const ehFonte = (url) => url.hostname === 'fonts.googleapis.com' || url.hostname
 
 self.addEventListener('install', (ev) => {
   // Sem skipWaiting aqui: a versão nova espera a usuária tocar no aviso.
-  ev.waitUntil(caches.open(VERSAO).then((c) => c.addAll(ARQUIVOS)));
+  ev.waitUntil(caches.open(VERSAO).then((c) => c.addAll(ARQUIVOS.map((u) => new Request(u, { cache: 'reload' })))));
 });
 
 self.addEventListener('activate', (ev) => {
@@ -63,14 +63,14 @@ self.addEventListener('message', (ev) => {
   if (ev.data && ev.data.tipo === 'skipWaiting') self.skipWaiting();
 });
 
-async function fonte(req) {
+async function fonte(req, bg) {
   const cache = await caches.open(CACHE_FONTES);
   const guardado = await cache.match(req);
   const rede = fetch(req).then((r) => {
     if (r && (r.ok || r.type === 'opaque')) cache.put(req, r.clone()).catch(() => {});
     return r;
   }).catch(() => undefined);
-  if (guardado) { rede.catch(() => {}); return guardado; }
+  if (guardado) { bg.push(rede); return guardado; }
   return (await rede) || Response.error(); // offline sem cache: o CSS cai no system-ui
 }
 
@@ -78,7 +78,12 @@ self.addEventListener('fetch', (ev) => {
   const req = ev.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (ehFonte(url)) { ev.respondWith(fonte(req)); return; }
+  if (ehFonte(url)) {
+    const bg = [];
+    ev.respondWith(fonte(req, bg));
+    ev.waitUntil(Promise.all(bg).catch(() => {}));
+    return;
+  }
   if (url.origin !== self.location.origin) return;
   ev.respondWith((async () => {
     const cache = await caches.open(VERSAO);

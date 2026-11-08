@@ -1,18 +1,18 @@
 // Registro do service worker e aviso de nova versão. Carregado só pelo navegador (index.html).
 const botao = document.getElementById('atualizar');
+let tocou = false;
 
 function oferecer(sw) {
   if (!botao) return;
   botao.hidden = false;
-  botao.onclick = () => { botao.disabled = true; sw.postMessage({ tipo: 'skipWaiting' }); };
+  botao.onclick = () => { tocou = true; botao.disabled = true; sw.postMessage({ tipo: 'skipWaiting' }); };
 }
 
 if ('serviceWorker' in navigator) {
-  const tinhaControlador = !!navigator.serviceWorker.controller;
   let recarregou = false;
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    // Na primeira instalação (sem controlador antes) não há o que recarregar.
-    if (!tinhaControlador || recarregou) return;
+    // Só recarrega depois do toque no aviso (a primeira instalação não recarrega).
+    if (!tocou || recarregou) return;
     recarregou = true;
     location.reload();
   });
