@@ -73,3 +73,37 @@ test('contexto: regra do serviço substitui a global e herda antecedência 7', (
   assert.equal(r.antecedencia, 7);
   assert.equal(c.regras.filter(x => x.id === 'res-colestase').length, 1);
 });
+
+test('mgso4-neuro: nada aos 20+0, amarelo aos 24+0', () => {
+  const p = (d) => ({ igDays: d, igRef: HOJE, alertasFeitos: [], dxs: [] });
+  assert.ok(!avaliarAlertas(p(ig(20)), HOJE, REGRAS_GLOBAIS).some(x => x.regraId === 'mgso4-neuro'));
+  const a = avaliarAlertas(p(ig(24)), HOJE, REGRAS_GLOBAIS).find(x => x.regraId === 'mgso4-neuro');
+  assert.equal(a.nivel, 'amarelo');
+});
+
+test('chaveFeito tolera undefined e desfazer sem id é no-op', () => {
+  assert.equal(chaveFeito(undefined), undefined);
+  const p = { alertasFeitos: [{ id: 'corticoide', data: HOJE, res: '' }] };
+  assert.deepEqual(desfazerAlertaFeito(p, undefined).alertasFeitos, p.alertasFeitos);
+});
+
+test('feito registrado por corticoide-pe aparece cinza em paciente com corticoide-rpmo', () => {
+  let p = { igDays: ig(30), igRef: HOJE, alertasFeitos: [], dxs: [{ dx: 'rpmo', mods: {} }] };
+  p = registrarAlertaFeito(p, 'corticoide-pe', HOJE);
+  const c = avaliarAlertas(p, HOJE, REGRAS_GLOBAIS).filter(x => x.regraId.startsWith('corticoide'));
+  assert.equal(c.length, 1);
+  assert.equal(c[0].regraId, 'corticoide-rpmo');
+  assert.equal(c[0].nivel, 'cinza');
+  assert.equal(c[0].estado, 'feito');
+});
+
+test('corticoide anterior que não emite não esconde o seguinte', () => {
+  const regras = parseRegras(`
+corticoide | | 28+0 | 33+6 | vermelho | Cort A | X
+corticoide-b | | 24+0 | 33+6 | vermelho | Cort B | X
+`).itens;
+  const p = { igDays: ig(26), igRef: HOJE, alertasFeitos: [], dxs: [] };
+  const a = avaliarAlertas(p, HOJE, regras);
+  assert.equal(a.length, 1);
+  assert.equal(a[0].regraId, 'corticoide-b');
+});

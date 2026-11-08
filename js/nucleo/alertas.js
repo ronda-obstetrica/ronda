@@ -6,7 +6,7 @@ import { casaAlvo, especificidade, grupo } from './textoregras.js';
 const JANELA_ENCERRADA_DIAS = 7;
 const ORDEM_NIVEL = { vermelho: 0, amarelo: 1, cinza: 2 };
 
-export const chaveFeito = (id) => (id === 'corticoide' || id.startsWith('corticoide-') ? 'corticoide' : id);
+export const chaveFeito = (id) => ((t) => (t === 'corticoide' || t.startsWith('corticoide-') ? 'corticoide' : id))(String(id ?? ''));
 
 const ddmm = (iso) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}`;
 

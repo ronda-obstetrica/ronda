@@ -66,7 +66,7 @@ corticoide-rpmo | rpmo | 24+0 | 33+6 | vermelho | Janela de corticoide — já r
 corticoide-placenta | placenta | 24+0 | 33+6 | vermelho | Janela de corticoide — já recebeu ciclo? | RBEHG 2023 p.41; OMS 2022
 corticoide-pe | dheg+gravidade | 24+0 | 33+6 | vermelho | Janela de corticoide — já recebeu ciclo? | RBEHG 2023 p.41, 44
 corticoide-rcf | rcf | 24+0 | 33+6 | vermelho | Janela de corticoide — já recebeu ciclo? | RBEHG 2023 p.41; OMS 2022
-mgso4-neuro |  | 0+0 | 31+6 | amarelo | <32 sem: se indicar parto, MgSO₄ para neuroproteção | RBEHG 2023 p.34, 41
+mgso4-neuro |  | 24+0 | 31+6 | amarelo | <32 sem: se indicar parto, MgSO₄ para neuroproteção | RBEHG 2023 p.34, 41
 res-pe-sem | dheg+pe!gravidade | 37+0 |  | vermelho | PE sem gravidade: indicar resolução a partir de 37+0 | RBEHG 2023 p.39 | 7
 res-pe-sobreposta | dheg+hac-pe!gravidade | 37+0 |  | vermelho | PE sobreposta sem gravidade: resolução a partir de 37+0 | RBEHG 2023 p.39; ACOG CO 831 | 7
 res-pe-grave | dheg+gravidade | 34+0 |  | amarelo | PE com gravidade estável: postergar se estável, reavaliar diariamente | RBEHG 2023 p.41 | 0
