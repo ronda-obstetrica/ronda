@@ -4,7 +4,7 @@ import { novaPaciente } from '../js/nucleo/estado.js';
 import { mesclarPorId } from '../js/nucleo/textoregras.js';
 import { contexto } from '../js/nucleo/contexto.js';
 
-const pac = novaPaciente();
+const pac = novaPaciente({ dxs: [{ dx: 'dmg', mods: {} }, { dx: 'dheg', mods: {} }] });
 const ids = (pac, medida, valor) => avaliarRegistro(pac, { data: '2026-11-08', medida, valor }, FAIXAS_GLOBAIS).map(a => a.faixaId);
 
 test('glicemia', () => {
@@ -72,5 +72,6 @@ test('registrar e foraDaFaixaHoje', () => {
   const r = foraDaFaixaHoje(p, '2026-11-08', FAIXAS_GLOBAIS);
   assert.equal(r.length, 1); assert.equal(r[0].registro.medida, 'jejum'); assert.equal(r[0].alertas[0].faixaId, 'glic-jejum');
   assert.equal(registrar(pac, { data: 'x', medida: 'voo', valor: 1 }), pac);
+  assert.deepEqual(avaliarRegistro(novaPaciente(), { medida: 'jejum', valor: 65 }, FAIXAS_GLOBAIS), []);
   assert.equal(MEDIDAS.length, 7);
 });
