@@ -35,7 +35,7 @@ function htmlCabecalho(pac, r) {
   </header>`;
 }
 
-function htmlDiagnosticos(pac) {
+export function htmlDiagnosticos(pac) {
   const blocos = pac.dxs.map((item, i) => {
     const def = DIAGNOSTICOS[item.dx];
     const mods = item.mods || {};
@@ -54,7 +54,7 @@ function htmlDiagnosticos(pac) {
   return `<div class="dxs">${blocos}</div>`;
 }
 
-function htmlAlertas(pac, alertas) {
+export function htmlAlertas(pac, alertas) {
   if (!alertas.length) return '';
   const varios = alertas.length > 1;
   const itens = alertas.map((a) => {
@@ -77,9 +77,8 @@ export function medidasDoPac(pac) {
   return MEDIDAS.filter((m) => pac.dxs.some((d) => (MEDIDAS_POR_DX[d.dx] ?? []).includes(m.id)));
 }
 
-function htmlControles(pac, hoje, ctx) {
-  const medidas = medidasDoPac(pac);
-  if (!medidas.length) return '';
+// Valores registrados hoje, com marca de fora da faixa e botão de apagar (Censo e Visita).
+export function htmlRegistrosHoje(pac, hoje, ctx) {
   const nomes = Object.fromEntries(MEDIDAS.map((m) => [m.id, m.nome]));
   const regs = (pac.registros ?? []).filter((r) => r.data === hoje);
   const lista = regs.map((reg) => {
@@ -89,10 +88,16 @@ function htmlControles(pac, hoje, ctx) {
     return `<li class="registro ${nivel}"><span><b>${esc(nomes[reg.medida] ?? reg.medida)}</b> ${esc(fmtValor(reg.valor))}${fora}</span>
       ${btn('valor-apagar', { id: pac.id, reg: reg.id }, '×', ` class="icone" aria-label="Apagar valor ${esc(fmtValor(reg.valor))}"`)}</li>`;
   }).join('');
+  return lista ? `<ul class="registros">${lista}</ul>` : '<p class="vazio-linha">Nenhum valor hoje.</p>';
+}
+
+function htmlControles(pac, hoje, ctx) {
+  const medidas = medidasDoPac(pac);
+  if (!medidas.length) return '';
   const pa = medidas[0].id === 'pa';
   const opcoes = medidas.map((m) => `<option value="${esc(m.id)}">${esc(m.nome)}</option>`).join('');
   return `<section class="bloco"><h3>Controles de hoje</h3>
-    ${lista ? `<ul class="registros">${lista}</ul>` : '<p class="vazio-linha">Nenhum valor hoje.</p>'}
+    ${htmlRegistrosHoje(pac, hoje, ctx)}
     <form class="controle" data-submit="registrar-valor" data-id="${esc(pac.id)}">
       <select name="medida" data-input="medida-sel" aria-label="Medida">${opcoes}</select>
       <input name="valor" autocomplete="off" aria-label="Valor" inputmode="${pa ? 'text' : 'decimal'}" placeholder="${pa ? '150x95' : '95'}">
@@ -124,7 +129,7 @@ export function htmlPend(pac, p, tipo, agora, comLeito = false) {
   </li>`;
 }
 
-function htmlPendencias(pac, hoje, agora) {
+export function htmlPendencias(pac, hoje, agora) {
   const cl = classificarHoje(pac, hoje);
   const itens = [
     ...cl.atrasadas.map((p) => htmlPend(pac, p, 'atrasada', agora)),
@@ -149,6 +154,7 @@ export function htmlCartao(pac, { hoje, ctx, agora = new Date() }) {
     ${r.obs ? `<p class="obs"><b>Obs.:</b> ${esc(r.obs)}</p>` : ''}
     <footer class="cartao-rodape">
       ${btn('editar', { id: pac.id }, 'Editar', ' class="sec"')}
+      ${btn('abrir-visita', { id: pac.id }, 'Visita', ' class="sec"')}
       ${btn('alta', { id: pac.id }, 'Alta/parto', ' class="sec perigo"')}
     </footer>
   </article>`;

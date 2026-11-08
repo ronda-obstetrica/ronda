@@ -9,10 +9,11 @@ import * as telaHoje from './ui/hoje.js';
 import * as plantao from './ui/plantao.js';
 import * as protocolos from './ui/protocolos.js';
 import * as dados from './ui/dados.js';
+import * as visita from './ui/visita.js';
 import * as formularios from './ui/formularios.js';
 
-// Registro das telas. A Task 15 acrescenta a visita; até lá a aba mostra "Em construção".
-const TELAS = { censo, hoje: telaHoje, plantao, protocolos, dados };
+// Registro das telas.
+const TELAS = { censo, hoje: telaHoje, visita, plantao, protocolos, dados };
 
 const ABAS = [
   ['censo', 'Censo'], ['hoje', 'Hoje'], ['visita', 'Visita'],
@@ -124,6 +125,8 @@ function lerTema() {
 const acoesGlobais = {
   aba: (ev, el) => irPara(el.dataset.aba),
   'fechar-folha': () => fecharFolha(),
+  // Botão "Visita" de um cartão do Censo: abre a visita naquele leito.
+  'abrir-visita': (ev, el) => { visita.focar(el.dataset.id); irPara('visita'); },
   tema: () => {
     const ordem = ['auto', 'light', 'dark'];
     const prox = ordem[(ordem.indexOf(lerTema()) + 1) % ordem.length];

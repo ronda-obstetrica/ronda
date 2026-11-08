@@ -85,7 +85,7 @@ test('telas da Task 14 exportam render e acoes (módulos sem DOM no topo)', asyn
 test('app.js registra as telas da Task 14 em TELAS', () => {
   const src = readFileSync(join(RAIZ, 'js', 'app.js'), 'utf8');
   for (const n of ['hoje', 'plantao', 'protocolos', 'dados']) assert.match(src, new RegExp(`from '\./ui/${n}\.js'`));
-  assert.match(src, /const TELAS = \{ censo, hoje: telaHoje, plantao, protocolos, dados \}/);
+  assert.match(src, /const TELAS = \{ censo, hoje: telaHoje, visita, plantao, protocolos, dados \}/);
   assert.doesNotMatch(src, /xlsx/i, 'a biblioteca da planilha não carrega na partida');
 });
 
@@ -97,4 +97,19 @@ test('app.js: atualizar só adota o novo estado depois de calcular e desenhar se
   const iSalva = corpo.indexOf('salvar(estado)');
   assert.ok(iRender > 0 && iAdota > iRender && iSalva > iAdota, 'ordem: desenhar → adotar → gravar');
   assert.match(corpo, /catch \(e\)[\s\S]*return false;/);
+});
+
+test('visita.js exporta render e acoes (reusa os data-act do Censo) e está em TELAS', async () => {
+  const v = await import('../js/ui/visita.js');
+  const censo = await import('../js/ui/censo.js');
+  assert.equal(typeof v.render, 'function');
+  assert.equal(typeof v.acoes, 'object');
+  for (const k of ['mod', 'alerta-feito', 'alerta-desfazer', 'alerta-pend', 'pend-feito', 'pend-desfazer', 'pend-aguardando',
+    'pend-dose', 'pend-nova', 'pend-nova-salvar', 'registrar-valor', 'valor-apagar']) {
+    assert.equal(v.acoes[k], censo.acoes[k], `visita deve reusar a ação ${k} do Censo`);
+  }
+  assert.equal(typeof v.acoes['visita-ir'], 'function');
+  const src = readFileSync(join(RAIZ, 'js', 'app.js'), 'utf8');
+  assert.match(src, /from '\.\/ui\/visita\.js'/);
+  assert.match(src, /'abrir-visita':/);
 });

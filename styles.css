@@ -291,3 +291,43 @@ code { font-family: var(--mono); font-size: .85em; overflow-wrap: anywhere; }
 .editor-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
 .nao-salvo { color: var(--amber); font-weight: 700; font-size: .85rem; white-space: nowrap; }
 .nao-salvo[hidden] { display: none; }
+
+/* ---------- Task 15: Visita (uma tela por leito, deslize horizontal) ---------- */
+.visita { display: grid; gap: 8px; min-width: 0; }
+.v-barra {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: var(--bg); padding: 4px 0;
+}
+.v-barra button { min-width: 56px; min-height: 48px; font-size: 1.5rem; line-height: 1; padding: 0 12px; }
+.v-indicador { font-family: var(--mono); font-weight: 700; font-size: 1.05rem; }
+.v-trilho {
+  position: relative;
+  display: flex; align-items: flex-start;
+  overflow-x: auto; overflow-y: hidden;
+  scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch; scrollbar-width: none;
+}
+.v-trilho::-webkit-scrollbar { display: none; }
+.v-trilho:focus { outline: none; }
+.v-leito-tela { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; padding: 0 2px; }
+.v-cartao { gap: 14px; }
+.v-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
+.v-leito { font-size: 2rem; font-weight: 800; line-height: 1.1; }
+.v-ig { font-family: var(--mono); font-weight: 700; font-size: 1.4rem; }
+.v-ig.ig-nada { font-family: var(--fonte); font-weight: 400; font-size: 1rem; color: var(--muted); font-style: italic; }
+.v-dia { font-family: var(--mono); font-weight: 600; font-size: 1.2rem; color: var(--muted); }
+.mudou { border-left: 4px solid var(--accent); border-radius: 8px; padding: 8px 10px; background: var(--gray-bg); }
+.mudou h3 { color: var(--accent); }
+.mudou-lista { margin: 0; padding-left: 18px; display: grid; gap: 2px; }
+.v-controles { display: grid; gap: 8px; }
+.v-controle { display: grid; grid-template-columns: minmax(84px, auto) minmax(0, 1fr) auto; align-items: center; gap: 8px; }
+.v-controle label { font-weight: 600; }
+.v-controle input { min-height: 52px; font-size: 1.3rem; font-family: var(--mono); }
+.v-controle button { min-height: 52px; }
+.v-trat { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.visita .mod { min-height: 48px; font-size: 1rem; padding: 6px 14px; }
+.visita .pend .check { min-height: 52px; min-width: 52px; font-size: 1.5rem; }
+.visita .pend { grid-template-columns: 52px minmax(0, 1fr); }
+.visita .pend.feita { grid-template-columns: 52px minmax(0, 1fr) auto; }
+.visita .acoes-linha button { min-height: 48px; font-size: 1rem; }
