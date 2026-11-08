@@ -33,7 +33,7 @@ test('+2 anteriores com 7 feitos', () => {
   const t = gerar(mkEst([p]));
   const linha = t.split('\n').find(l => l.startsWith('Feito: '));
   assert.ok(linha.endsWith('+2 anteriores'));
-  assert.ok(linha.includes('03/11 Item2 — ok · 07/11 Item6 — ok') || linha.includes('Item6'));
+  assert.equal(linha, 'Feito: 03/11 Item2 — ok · 04/11 Item3 — ok · 05/11 Item4 — ok · 06/11 Item5 — ok · 07/11 Item6 — ok · +2 anteriores');
   assert.ok(!linha.includes('Internação'));
 });
 test('bloco completo do leito 04', () => {
@@ -44,8 +44,7 @@ test('bloco completo do leito 04', () => {
     'Alergias: Dipirona',
     '⚠ Janela de corticoide — já recebeu ciclo?',
     '• <32 sem: se indicar parto, MgSO₄ para neuroproteção',
-  ].join('
-'));
+  ].join('\n'));
 });
 test('resumoPaciente e linhaDoTempo', () => {
   const [p4] = seedExemplos(HOJE);
