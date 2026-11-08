@@ -63,14 +63,16 @@ self.addEventListener('message', (ev) => {
   if (ev.data && ev.data.tipo === 'skipWaiting') self.skipWaiting();
 });
 
-async function fonte(req, bg) {
+// `cobrir(promessa)` registra o trabalho de fundo; o fetch chama waitUntil antes de qualquer await.
+async function fonte(req, cobrir) {
   const cache = await caches.open(CACHE_FONTES);
   const guardado = await cache.match(req);
   const rede = fetch(req).then((r) => {
     if (r && (r.ok || r.type === 'opaque')) cache.put(req, r.clone()).catch(() => {});
     return r;
   }).catch(() => undefined);
-  if (guardado) { bg.push(rede); return guardado; }
+  cobrir(rede);
+  if (guardado) return guardado;
   return (await rede) || Response.error(); // offline sem cache: o CSS cai no system-ui
 }
 
@@ -79,9 +81,10 @@ self.addEventListener('fetch', (ev) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (ehFonte(url)) {
-    const bg = [];
-    ev.respondWith(fonte(req, bg));
-    ev.waitUntil(Promise.all(bg).catch(() => {}));
+    let cobrir;
+    const coberto = new Promise((ok) => { cobrir = (p) => ok(Promise.resolve(p).catch(() => {})); });
+    ev.waitUntil(coberto);
+    ev.respondWith(fonte(req, cobrir).catch(() => { cobrir(); return Response.error(); }));
     return;
   }
   if (url.origin !== self.location.origin) return;
