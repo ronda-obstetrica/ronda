@@ -29,7 +29,7 @@ function bloco(pac, hoje, ctx, mudou) {
   }
   if (r.tratamentos.length) L.push('Tratamentos: ' + r.tratamentos.join(' · '));
   if (r.foraFaixa.length) L.push('Fora da faixa: ' + r.foraFaixa.join(' · '));
-  const feitos = r.linhaTempo.filter(e => e.texto !== 'Internação');
+  const feitos = r.linhaTempo.filter(e => e.tipo !== 'internacao');
   if (feitos.length) {
     const itens = feitos.slice(-5).map(e => `${ddmm(e.data)} ${e.texto}`);
     const mais = feitos.length - itens.length;

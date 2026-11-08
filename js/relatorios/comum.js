@@ -31,16 +31,16 @@ function fimDoTratamento(dur) {
 // `agora` (opcional): inclui tratamentos já terminados e ainda abertos.
 export function linhaDoTempo(pac, agora) {
   const e = [];
-  if (pac.int) e.push({ data: pac.int, texto: 'Internação' });
+  if (pac.int) e.push({ data: pac.int, texto: 'Internação', tipo: 'internacao' });
   for (const p of pac.pend ?? []) {
-    if (p.done) e.push({ data: p.doneAt, texto: comRes(p.texto, p.res) });
+    if (p.done) e.push({ data: p.doneAt, texto: comRes(p.texto, p.res), tipo: 'pendencia' });
   }
-  for (const f of pac.alertasFeitos ?? []) e.push({ data: f.data, texto: comRes(msgDoFeito(f.id), f.res) });
+  for (const f of pac.alertasFeitos ?? []) e.push({ data: f.data, texto: comRes(msgDoFeito(f.id), f.res), tipo: 'alerta' });
   if (agora) {
     for (const p of pac.pend ?? []) {
       if (p.done || !p.dur) continue;
       const pr = progressoTratamento(p, agora);
-      if (pr?.terminado) e.push({ data: fimDoTratamento(p.dur), texto: p.texto + ' concluído' });
+      if (pr?.terminado) e.push({ data: fimDoTratamento(p.dur), texto: p.texto + ' concluído', tipo: 'tratamento' });
     }
   }
   return e.map((x, i) => ({ x, i }))
@@ -70,7 +70,7 @@ export function resumoPaciente(pac, hoje, ctx, agora = new Date(hoje + 'T12:00')
     atrasadas: cl.atrasadas,
     aguardando: cl.aguardando,
     tratamentos: pac.pend.filter(p => !p.done && p.dur)
-      .map(p => `${p.texto} ${progressoTratamento(p, agora).texto}`),
+      .map(p => [p.texto, progressoTratamento(p, agora)?.texto].filter(Boolean).join(' ')),
     foraFaixa: foraDaFaixaHoje(pac, hoje, ctx.faixas)
       .map(f => `${nomes[f.registro.medida] ?? f.registro.medida} ${fmtValor(f.registro.valor)}`),
     linhaTempo: linhaDoTempo(pac, agora),

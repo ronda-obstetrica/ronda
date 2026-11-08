@@ -3,6 +3,7 @@ import { textoPlantao } from '../js/relatorios/texto.js';
 import { resumoPaciente, linhaDoTempo } from '../js/relatorios/comum.js';
 import { novoEstado, novaPaciente, seedExemplos } from '../js/nucleo/estado.js';
 import { novaPendencia } from '../js/nucleo/pendencias.js';
+import { marcarPlantao } from '../js/nucleo/mudancas.js';
 import { contexto } from '../js/nucleo/contexto.js';
 
 const HOJE = '2026-11-04';
@@ -52,4 +53,39 @@ test('resumoPaciente e linhaDoTempo', () => {
   const r = resumoPaciente(p4, HOJE, contexto(e));
   assert.equal(r.ig, '31+2'); assert.equal(r.dia, 7); assert.equal(r.gpca, 'G2P1C1A0');
   assert.equal(linhaDoTempo(p4)[0].texto, 'Internação');
+});
+
+const base = (o = {}) => novaPaciente({ id: 'x', leito: '01', int: '2026-11-01', igDays: 200, igRef: HOJE, dxs: [{ dx: 'dheg', mods: {} }], ...o });
+const linhaDe = (t, pref) => t.split('\n').find(l => l.startsWith(pref));
+
+test('Hoje, atrasadas, Aguardando, Tratamentos e Fora da faixa', () => {
+  const pend = [
+    novaPendencia({ id: 'a', texto: 'Labs', cat: 'Exame', due: '2026-11-03', estadoExame: 'solicitado' }),
+    novaPendencia({ id: 'b', texto: 'CTG', cat: 'Avaliação', due: HOJE }),
+    novaPendencia({ id: 'c', texto: 'Hemograma', cat: 'Exame', due: HOJE, estadoExame: 'aguardando', aguardandoDesde: '2026-11-03' }),
+    novaPendencia({ id: 'd', texto: 'MgSO₄', cat: 'Medicação', due: HOJE, dur: { total: 24, unidade: 'horas', inicio: '2026-11-03T18:00' } }),
+  ];
+  const registros = [{ id: 'r1', data: HOJE, medida: 'pa', valor: { s: 165, d: 100 } }];
+  const t = gerar(mkEst([base({ pend, registros })]));
+  assert.equal(linhaDe(t, 'Hoje: '), 'Hoje: [ ] Labs (atrasado 1d) · [ ] CTG · [ ] MgSO₄');
+  assert.equal(linhaDe(t, 'Aguardando resultado: '), 'Aguardando resultado: Hemograma (desde 03/11)');
+  assert.equal(linhaDe(t, 'Tratamentos: '), 'Tratamentos: MgSO₄ 18h/24h');
+  assert.equal(linhaDe(t, 'Fora da faixa: '), 'Fora da faixa: PA 165x100');
+});
+
+test('Mudou aparece após marcarPlantao e alteração', () => {
+  const p = base({ dxs: [{ dx: 'dmg', mods: {} }] });
+  const e0 = mkEst([p]);
+  const marcado = marcarPlantao(e0, '2026-11-03', contexto(e0));
+  const e1 = { ...marcado, pac: [{ ...p, dxs: [{ dx: 'dmg', mods: { medicacao: true } }] }] };
+  const t = gerar(e1);
+  assert.equal(linhaDe(t, 'Mudou: '), 'Mudou: Diagnóstico/modificador: DMG em uso de medicação');
+  assert.ok(!gerar(mkEst([p])).includes('Mudou:'));
+});
+
+test('linhaDoTempo marca tipo e tratamento concluído', () => {
+  const pend = [novaPendencia({ id: 'd', texto: 'MgSO₄', dur: { total: 24, unidade: 'horas', inicio: '2026-11-02T18:00' } })];
+  const lt = linhaDoTempo(base({ pend }), new Date(HOJE + 'T12:00'));
+  assert.deepEqual(lt.map(x => x.tipo), ['internacao', 'tratamento']);
+  assert.equal(lt[1].texto, 'MgSO₄ concluído');
 });
