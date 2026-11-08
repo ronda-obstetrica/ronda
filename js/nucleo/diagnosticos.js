@@ -114,3 +114,8 @@ export function alternarMod(item, modId, valor) {
   }
   return { ...item, mods };
 }
+
+// Textos por extenso de cada parte ativa (inclui o tipo da DHEG), em ordem de catálogo.
+export function partesExtenso(item) {
+  return partesAtivas(item).map((p) => (p.opcao ? p.opcao.extenso : p.mod.extenso));
+}
