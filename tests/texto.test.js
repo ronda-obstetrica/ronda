@@ -116,3 +116,11 @@ test('MgSO₄ 24h iniciado 08:00 não está concluído às 10:00 e mostra as hor
   assert.ok(depois.includes('MgSO₄ 24h 25h/24h'));
   assert.ok(depois.includes('MgSO₄ 24h concluído'));
 });
+
+test('meds e programação no plantão, sem iniciais', async () => {
+  const { novaMed } = await import('../js/nucleo/medicacoes.js');
+  const p = novaPaciente({ id: 'x', leito: '01', int: '2026-11-01', igDays: 200, igRef: HOJE, iniciais: 'MAS', prog: 'USG amanhã',
+    meds: [novaMed({ texto: 'Cefalexina 12/12h', inicio: '2026-11-02', previstos: 7 })] });
+  const t = gerar(mkEst([p]));
+  assert.ok(t.includes('Medicações: Cefalexina 12/12h · D3/7') && t.includes('Programação: USG amanhã') && !t.includes('MAS'));
+});

@@ -16,6 +16,7 @@ const ARQUIVOS = [
   'js/nucleo/diagnosticos.js',
   'js/nucleo/estado.js',
   'js/nucleo/faixas.js',
+  'js/nucleo/medicacoes.js',
   'js/nucleo/mudancas.js',
   'js/nucleo/pendencias.js',
   'js/nucleo/regras.js',

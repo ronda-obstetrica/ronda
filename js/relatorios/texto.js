@@ -35,6 +35,8 @@ function bloco(pac, hoje, ctx, mudou, agora) {
     const mais = feitos.length - itens.length;
     L.push('Feito: ' + itens.join(' · ') + (mais > 0 ? ` · +${mais} anteriores` : ''));
   }
+  if (r.meds.length) L.push('Medicações: ' + r.meds.join('; '));
+  if (r.prog) L.push('Programação: ' + r.prog);
   if (r.obs) L.push('Obs: ' + r.obs);
   return L.join('\n');
 }

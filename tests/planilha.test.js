@@ -68,3 +68,13 @@ test('gerarXlsx (SheetJS vendorizado) gera zip não vazio', (t) => {
     assert.equal(String.fromCharCode(b[0], b[1]), 'PK');
   });
 });
+
+test('colunas Medicações e Programação, sem iniciais', async () => {
+  const { novaMed } = await import('../js/nucleo/medicacoes.js');
+  const p = novaPaciente({ id: 'x', leito: '01', int: '2026-11-01', igDays: 200, igRef: HOJE, iniciais: 'MAS', prog: 'USG amanhã',
+    meds: [novaMed({ texto: 'Cefalexina 12/12h', inicio: '2026-11-02', previstos: 7 })] });
+  const l = gerar(mkEst([p]));
+  assert.equal(col(l, 'Medicações', 1), 'Cefalexina 12/12h · D3/7');
+  assert.equal(col(l, 'Programação', 1), 'USG amanhã');
+  assert.ok(!JSON.stringify(l).includes('MAS'));
+});

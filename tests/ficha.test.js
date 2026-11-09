@@ -63,3 +63,11 @@ test('datas de backup malicioso são escapadas', () => {
   assert.ok(!h.includes('<&'));
   assert.ok(h.includes('&lt;&amp;'));
 });
+
+test('meds e programação na ficha, escapados, sem iniciais', async () => {
+  const { novaMed } = await import('../js/nucleo/medicacoes.js');
+  const p = novaPaciente({ id: 'x', leito: '01', int: '2026-11-01', igDays: 200, igRef: HOJE, iniciais: 'MAS', prog: 'USG <amanhã>',
+    meds: [novaMed({ texto: 'Cefalexina 12/12h', inicio: '2026-11-02', previstos: 7 })] });
+  const h = gerar(mk([p]));
+  assert.ok(h.includes('Medicações') && h.includes('Cefalexina 12/12h · D3/7') && h.includes('Programação') && h.includes('USG &lt;amanhã&gt;') && !h.includes('MAS'));
+});

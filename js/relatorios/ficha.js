@@ -47,8 +47,10 @@ ${secao('Alertas', r.alertas.map((a) => `<b>${prefixo(a)}</b> ${esc(a.msg)}`), '
 ${secao('Hoje', hojeItens)}
 ${secao('Aguardando resultado', aguardando)}
 ${secao('Tratamentos', r.tratamentos.map(esc))}
+${secao('Medicações', r.meds.map(esc))}
 ${secao('Fora da faixa', r.foraFaixa.map(esc))}
 ${secao('Já feito na internação', recentes)}
+${secao('Programação', r.prog ? [esc(r.prog)] : [])}
 </article>`;
 }
 

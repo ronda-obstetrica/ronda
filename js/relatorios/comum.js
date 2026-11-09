@@ -4,6 +4,7 @@ import { rotuloCurto, rotuloExtenso } from '../nucleo/diagnosticos.js';
 import { avaliarAlertas, ordenarAlertas, chaveFeito } from '../nucleo/alertas.js';
 import { REGRAS_GLOBAIS } from '../nucleo/regras.js';
 import { classificarHoje, progressoTratamento } from '../nucleo/pendencias.js';
+import { rotuloMed } from '../nucleo/medicacoes.js';
 import { foraDaFaixaHoje, MEDIDAS } from '../nucleo/faixas.js';
 
 const comRes = (txt, res) => txt + (res ? ' — ' + res : '');
@@ -64,6 +65,8 @@ export function resumoPaciente(pac, hoje, ctx, agora = new Date()) {
     dxExtenso: pac.dxs.map(rotuloExtenso),
     alerg: pac.alerg ?? '',
     obs: pac.obs ?? '',
+    meds: (pac.meds ?? []).map(m => rotuloMed(m, hoje)),
+    prog: pac.prog ?? '',
     alertas: ordenarAlertas(avaliarAlertas(pac, hoje, ctx.regras)),
     hoje: cl.hoje,
     atrasadas: cl.atrasadas,

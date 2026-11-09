@@ -3,7 +3,7 @@ import { ordenarPacientes } from '../nucleo/estado.js';
 import { dxDef, partesExtenso } from '../nucleo/diagnosticos.js';
 import { resumoPaciente } from './comum.js';
 
-export const COLUNAS = ['Leito', 'Idade', 'G/P/C/A', 'IG hoje', 'Dia de internação', 'Diagnósticos', 'Modificadores', 'Alergias', 'Alertas ativos', 'Alertas feitos', 'Pendências abertas', 'Pendências atrasadas', 'Aguardando resultado', 'Fora da faixa hoje', 'Observação'];
+export const COLUNAS = ['Leito', 'Idade', 'G/P/C/A', 'IG hoje', 'Dia de internação', 'Diagnósticos', 'Modificadores', 'Alergias', 'Alertas ativos', 'Alertas feitos', 'Pendências abertas', 'Pendências atrasadas', 'Aguardando resultado', 'Fora da faixa hoje', 'Medicações', 'Programação', 'Observação'];
 
 const juntar = (v) => v.join('; ');
 const txt = (v) => (v === null || v === undefined ? '' : String(v));
@@ -26,6 +26,8 @@ function linha(pac, hoje, ctx, agora) {
     juntar(r.atrasadas.map(p => `${p.texto} (${p.diasAtraso}d)`)),
     juntar(r.aguardando.map(p => p.texto)),
     juntar(r.foraFaixa),
+    juntar(r.meds),
+    r.prog,
     r.obs,
   ].map(txt);
 }
