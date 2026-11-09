@@ -7,10 +7,11 @@ import { novaPendencia } from '../js/nucleo/pendencias.js';
 import { htmlHoje, alertasDeTodos } from '../js/ui/hoje.js';
 import { htmlPlantao, nomePlanilha } from '../js/ui/plantao.js';
 import { htmlProtocolos, htmlGlobais, htmlErros, errosDe, gravarTexto, AVISO_PROTOCOLOS, acoes as acoesProt, limparRascunhos, temRascunho } from '../js/ui/protocolos.js';
-import { htmlDados, confirmaApagar, nomeBackup, ensaiarRestauracao } from '../js/ui/dados.js';
+import { htmlDados, textoConfirmaRestaurar, confirmaApagar, nomeBackup, ensaiarRestauracao } from '../js/ui/dados.js';
 import { htmlNovaPend, lerNovaPend, acoes as acoesPend } from '../js/ui/pendform.js';
 import { exportarJSON } from '../js/nucleo/estado.js';
 import { htmlCenso, htmlLembreteBackup } from '../js/ui/censo.js';
+import { htmlPaciente } from '../js/ui/paciente.js';
 
 const HOJE = '2026-11-08';
 const AGORA = new Date(`${HOJE}T12:00`);
@@ -31,7 +32,7 @@ test('Hoje: alertas de todos os leitos com o leito, ordenados (vermelho primeiro
   assert.deepEqual(niveis, [...niveis].sort((x, y) => (x === 'vermelho' ? 0 : 1) - (y === 'vermelho' ? 0 : 1)));
   const html = htmlHoje(dados(estado), AGORA);
   assert.match(html, /<h3>Alertas <span class="contagem">\d+<\/span>/);
-  assert.match(html, /Leito 04<\/b> <span class="prefixo">▲ AGIR:/);
+  assert.match(html, /data-act="abrir-paciente" data-id="[^"]+" class="pend-leito leito-link">Leito 04<\/button> <span class="prefixo">▲ AGIR:/);
   assert.match(html, /data-act="alerta-feito" data-id="[^"]+" data-regra="[^"]+"/);
   assert.doesNotMatch(html, /undefined|NaN/);
 });
@@ -49,8 +50,9 @@ test('Hoje: pendências agrupadas na ordem pedida, cada uma com o leito e atrasa
   const ordem = ['Atrasadas', 'Hoje <span', 'Aguardando resultado', 'Amanhã', 'Concluídas hoje'].map((t) => html.indexOf(`<h3>${t}`));
   assert.ok(ordem.every((i) => i > 0), `grupo faltando: ${ordem}`);
   assert.deepEqual(ordem, [...ordem].sort((a, b) => a - b));
-  assert.match(html, /Leito 12<\/b> <span class="prefixo">ATRASADA 3d:<\/span> Atrasada V/);
-  assert.equal((html.match(/class="pend-leito">Leito 12/g) ?? []).length, 5);
+  assert.match(html, /Leito 12<\/button> <span class="prefixo">ATRASADA 3d:<\/span> Atrasada V/);
+  assert.equal((html.match(/class="pend-leito leito-link">Leito 12/g) ?? []).length, 5);
+  assert.equal((html.match(/data-act="abrir-paciente"/g) ?? []).length, 5);
   assert.match(html, /data-act="pend-desfazer"/); // mesmas ações do Censo
   assert.doesNotMatch(html, /data-act="pend-aguardando"/); // o exame já está aguardando
 });
@@ -137,9 +139,9 @@ test('Lembrete de backup no Censo com botão "Fazer backup" que leva à aba Dado
   assert.equal(htmlLembreteBackup(comSeed(), HOJE), ''); // só exemplos
 });
 
-test('Pendência manual: botão no cartão, folha com campos e aviso de LGPD', () => {
+test('Pendência manual: botão na página da paciente, folha com campos e aviso de LGPD', () => {
   const estado = comSeed();
-  assert.match(htmlCenso(dados(estado), AGORA), /data-act="pend-nova" data-id="[^"]+"[^>]*>\+ pendência/);
+  assert.match(htmlPaciente(dados(estado), { agora: AGORA }), /data-act="pend-nova" data-id="[^"]+"[^>]*>\+ Pendência/);
   const html = htmlNovaPend(estado.pac[0], HOJE);
   assert.match(html, /name="texto" maxlength="120"/);
   assert.match(html, /<select name="cat">/);
@@ -166,6 +168,11 @@ test('Pendência manual: validação (texto, repetição, duração com as regra
   assert.deepEqual(d, { total: 7, unidade: 'dias', inicio: '2026-11-09' });
   assert.equal(lerNovaPend({ texto: 'S', cat: 'Medicação', dur: '24h' }, HOJE).pend.dur.inicio, `${HOJE}T08:00`);
   assert.deepEqual(lerNovaPend({ texto: 'C', cat: 'Medicação', dur: '2doses@1' }, HOJE).pend.dur.doses, []);
+});
+
+test('Restaurar: a confirmação avisa que os leitos voltam sem as iniciais', () => {
+  assert.match(textoConfirmaRestaurar(3), /backup \(3 leitos\)\? Os leitos voltam sem as iniciais\./);
+  assert.match(textoConfirmaRestaurar(1), /\(1 leito\)/);
 });
 
 test('Restaurar: ensaio aceita backup bom e recusa backup estruturado que quebraria a tela', () => {

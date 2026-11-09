@@ -1,6 +1,7 @@
-// Aba Censo: um cartão por leito, em ordem natural, com ações por toque.
-import { acharPac, mudarPac, ddmm, esc } from './util.js';
-import { htmlCartao } from './cartao.js';
+// Aba Censo: uma faixa por leito, em ordem natural; tocar abre a página da paciente.
+// Este módulo também guarda as ações compartilhadas (modificador, alerta, pendência, registro, alta) que a página da paciente e a aba Hoje reutilizam.
+import { comPac, mudarPac, ddmm, esc } from './util.js';
+import { resumoPaciente } from '../relatorios/comum.js';
 import { htmlFeitoAlerta, htmlFeitoPend, htmlEscolha } from './formularios.js';
 import { htmlFichas } from '../relatorios/ficha.js';
 import { textoPlantao } from '../relatorios/texto.js';
@@ -28,29 +29,42 @@ export function htmlLembreteBackup(estado, hoje) {
     <button type="button" class="sec mini" data-act="aba" data-aba="dados">Fazer backup</button></div>`;
 }
 
+// Uma linha clicável: Leito 04 · 31+2 sem · MAS · siglas · alertas vermelhos · pendências de hoje e atrasadas.
+export function htmlFaixaLeito(pac, { hoje, ctx, agora = new Date() }) {
+  const r = resumoPaciente(pac, hoje, ctx, agora);
+  const ig = r.ig === 'IG não informada' ? '<span class="fx-ig ig-nada">IG não informada</span>' : `<span class="fx-ig">${esc(r.ig)} sem</span>`;
+  const vermelhos = r.alertas.filter((a) => a.nivel === 'vermelho' && a.estado !== 'feito' && a.estado !== 'encerrado').length;
+  const pends = r.hoje.length + r.atrasadas.length;
+  const partes = [
+    `<b class="fx-leito">Leito ${esc(pac.leito)}</b>`,
+    ig,
+    pac.iniciais ? `<span class="fx-ini">${esc(pac.iniciais)}</span>` : '',
+    r.dxCurto.length ? `<span class="fx-dx">${esc(r.dxCurto.join(', '))}</span>` : '',
+    `<span class="fx-alertas${vermelhos ? ' tem' : ''}">${vermelhos} ${vermelhos === 1 ? 'alerta vermelho' : 'alertas vermelhos'}</span>`,
+    `<span class="fx-pends${pends ? ' tem' : ''}">${pends} ${pends === 1 ? 'pendência' : 'pendências'}</span>`,
+    pac.ex ? '<span class="etq-ex">exemplo</span>' : '',
+  ].filter(Boolean);
+  return `<button type="button" class="faixa-leito" data-act="abrir-paciente" data-id="${esc(pac.id)}">${partes.join('<span class="sep" aria-hidden="true"> · </span>')}</button>`;
+}
+
 export function htmlCenso({ estado, ctx, hoje }, agora = new Date()) {
   const pacs = ordenarPacientes(estado.pac);
   const backup = htmlLembreteBackup(estado, hoje);
   const exemplos = pacs.some((p) => p.ex)
     ? '<p class="nota">Os leitos marcados como "exemplo" são fictícios. Eles podem ser apagados na aba Dados.</p>' : '';
-  const cartoes = pacs.length
-    ? pacs.map((p) => htmlCartao(p, { hoje, ctx, agora })).join('')
+  const faixas = pacs.length
+    ? pacs.map((p) => htmlFaixaLeito(p, { hoje, ctx, agora })).join('')
     : '<p class="vazio">Nenhuma paciente. Toque em "+ Paciente" para cadastrar.</p>';
   return `${htmlBannerErros(ctx)}${backup}
     <div class="barra"><h1 class="titulo-aba">Censo <span class="contagem">${pacs.length} ${pacs.length === 1 ? 'leito' : 'leitos'}</span></h1>
       <button type="button" class="primario" data-act="novo">+ Paciente</button></div>
     ${exemplos}
-    <div class="cartoes">${cartoes}</div>`;
+    <div class="faixas">${faixas}</div>`;
 }
 
 export function render(raiz, dados) {
   raiz.innerHTML = htmlCenso(dados);
 }
-
-const comPac = (fn) => (ev, el, api) => {
-  const pac = acharPac(api.estado, el.dataset.id);
-  if (pac) fn(pac, el, api, ev);
-};
 
 export const acoes = {
   ...acoesPend,

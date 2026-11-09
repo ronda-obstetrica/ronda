@@ -85,7 +85,7 @@ test('telas da Task 14 exportam render e acoes (módulos sem DOM no topo)', asyn
 test('app.js registra as telas da Task 14 em TELAS', () => {
   const src = readFileSync(join(RAIZ, 'js', 'app.js'), 'utf8');
   for (const n of ['hoje', 'plantao', 'protocolos', 'dados']) assert.match(src, new RegExp(`from '\./ui/${n}\.js'`));
-  assert.match(src, /const TELAS = \{ censo, hoje: telaHoje, visita, plantao, protocolos, dados \}/);
+  assert.match(src, /const TELAS = \{ censo, hoje: telaHoje, programacao, paciente, plantao, protocolos, dados \}/);
   assert.doesNotMatch(src, /xlsx/i, 'a biblioteca da planilha não carrega na partida');
 });
 
@@ -99,28 +99,44 @@ test('app.js: atualizar só adota o novo estado depois de calcular e desenhar se
   assert.match(corpo, /catch \(e\)[\s\S]*return false;/);
 });
 
-test('visita.js exporta render e acoes (reusa os data-act do Censo) e está em TELAS', async () => {
-  const v = await import('../js/ui/visita.js');
+test('paciente.js exporta render e acoes (reusa as ações do Censo), programacao.js idem, e as duas estão em TELAS', async () => {
+  const v = await import('../js/ui/paciente.js');
   const censo = await import('../js/ui/censo.js');
   assert.equal(typeof v.render, 'function');
   assert.equal(typeof v.acoes, 'object');
   for (const k of ['mod', 'alerta-feito', 'alerta-desfazer', 'alerta-pend', 'pend-feito', 'pend-desfazer', 'pend-aguardando',
-    'pend-dose', 'pend-nova', 'pend-nova-salvar', 'registrar-valor', 'valor-apagar']) {
-    assert.equal(v.acoes[k], censo.acoes[k], `visita deve reusar a ação ${k} do Censo`);
+    'pend-dose', 'pend-nova', 'pend-nova-salvar', 'registrar-valor', 'valor-apagar', 'alta', 'alta-remover']) {
+    assert.equal(v.acoes[k], censo.acoes[k], `a página deve reusar a ação ${k} do Censo`);
   }
-  assert.equal(typeof v.acoes['visita-ir'], 'function');
+  for (const k of ['paciente-ir', 'med-nova', 'med-salvar', 'med-editar', 'med-remover', 'prog-editar', 'prog-salvar',
+    'sug-aceitar', 'sug-todas', 'sug-dispensar', 'sug-dispensadas', 'sug-restaurar']) {
+    assert.equal(typeof v.acoes[k], 'function', `falta a ação ${k}`);
+  }
+  const p = await import('../js/ui/programacao.js');
+  assert.equal(typeof p.render, 'function');
+  assert.equal(typeof p.acoes, 'object');
   const src = readFileSync(join(RAIZ, 'js', 'app.js'), 'utf8');
-  assert.match(src, /from '\.\/ui\/visita\.js'/);
-  assert.match(src, /'abrir-visita':/);
+  assert.match(src, /from '\.\/ui\/paciente\.js'/);
+  assert.match(src, /from '\.\/ui\/programacao\.js'/);
+  assert.match(src, /'abrir-paciente':/);
+  assert.doesNotMatch(src, /visita/i);
 });
 
-test('aba Visita: "novo" (botão "+ Paciente" do estado vazio) está entre as ações ativas', async () => {
+test('abas: Programação na barra, a página da paciente fora dela', () => {
+  const src = readFileSync(join(RAIZ, 'js', 'app.js'), 'utf8');
+  const abas = src.slice(src.indexOf('const ABAS = ['), src.indexOf('];', src.indexOf('const ABAS = [')));
+  assert.ok(abas.includes("['programacao', 'Programação']"));
+  assert.ok(!abas.includes('visita'));
+  assert.ok(!abas.includes('paciente'));
+});
+
+test('página da paciente: "novo" (botão "+ Paciente" do estado vazio) está entre as ações ativas', async () => {
   const f = await import('../js/ui/formularios.js');
-  const v = await import('../js/ui/visita.js');
+  const v = await import('../js/ui/paciente.js');
   const src = readFileSync(join(RAIZ, 'js', 'app.js'), 'utf8');
   // acoesAtivas junta as globais, as de formularios (sempre) e as da tela atual.
   assert.match(src, /const acoesAtivas = \(\) => \(\{ \.\.\.acoesGlobais, \.\.\.formularios\.acoes, \.\.\.\(TELAS\[aba\]\?\.acoes \?\? \{\}\) \}\)/);
-  const ativasNaVisita = { ...f.acoes, ...v.acoes };
-  assert.equal(typeof ativasNaVisita.novo, 'function');
-  assert.equal(ativasNaVisita.novo, f.acoes.novo, 'a visita não deve sobrescrever "novo"');
+  const ativas = { ...f.acoes, ...v.acoes };
+  assert.equal(typeof ativas.novo, 'function');
+  assert.equal(ativas.novo, f.acoes.novo, 'a página não deve sobrescrever "novo"');
 });

@@ -9,14 +9,15 @@ import * as telaHoje from './ui/hoje.js';
 import * as plantao from './ui/plantao.js';
 import * as protocolos from './ui/protocolos.js';
 import * as dados from './ui/dados.js';
-import * as visita from './ui/visita.js';
+import * as programacao from './ui/programacao.js';
+import * as paciente from './ui/paciente.js';
 import * as formularios from './ui/formularios.js';
 
-// Registro das telas.
-const TELAS = { censo, hoje: telaHoje, visita, plantao, protocolos, dados };
+// Registro das telas. A página da paciente existe em TELAS mas fica fora da barra de abas.
+const TELAS = { censo, hoje: telaHoje, programacao, paciente, plantao, protocolos, dados };
 
 const ABAS = [
-  ['censo', 'Censo'], ['hoje', 'Hoje'], ['visita', 'Visita'],
+  ['censo', 'Censo'], ['hoje', 'Hoje'], ['programacao', 'Programação'],
   ['plantao', 'Plantão'], ['protocolos', 'Protocolos'], ['dados', 'Dados'],
 ];
 const TEMAS = { auto: 'automático', light: 'claro', dark: 'escuro' };
@@ -102,7 +103,7 @@ const api = {
 function render(est = estado, c = ctx) {
   definirDxCustom(est?.dxCustom ?? []);
   for (const b of document.querySelectorAll('.abas [data-aba]')) {
-    if (b.dataset.aba === aba) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+    if (b.dataset.aba === (aba === 'paciente' ? 'censo' : aba)) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   }
   $('#data-hoje').textContent = new Date(`${hoje}T12:00`).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
   const tela = TELAS[aba];
@@ -114,7 +115,7 @@ function render(est = estado, c = ctx) {
 }
 
 function irPara(nova) {
-  if (!ABAS.some(([id]) => id === nova)) return;
+  if (nova !== 'paciente' && !ABAS.some(([id]) => id === nova)) return;
   aba = nova;
   history.replaceState(null, '', `#${aba}`);
   fecharFolha();
@@ -135,8 +136,8 @@ function lerTema() {
 const acoesGlobais = {
   aba: (ev, el) => irPara(el.dataset.aba),
   'fechar-folha': () => fecharFolha(),
-  // Botão "Visita" de um cartão do Censo: abre a visita naquele leito.
-  'abrir-visita': (ev, el) => { visita.focar(el.dataset.id); irPara('visita'); },
+  // Faixa do Censo, leito do Hoje ou da Programação: abre a página da paciente naquele leito.
+  'abrir-paciente': (ev, el) => { paciente.focar(el.dataset.id); irPara('paciente'); },
   tema: () => {
     const ordem = ['auto', 'light', 'dark'];
     const prox = ordem[(ordem.indexOf(lerTema()) + 1) % ordem.length];

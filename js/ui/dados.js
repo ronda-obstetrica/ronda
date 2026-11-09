@@ -65,6 +65,9 @@ export function ensaiarRestauracao(texto, hoje) {
   return novo;
 }
 
+// O backup não leva as iniciais: avisar antes de substituir os dados.
+export const textoConfirmaRestaurar = (n) => `Substituir os dados atuais por este backup (${n} ${n === 1 ? 'leito' : 'leitos'})? Os leitos voltam sem as iniciais.`;
+
 export const confirmaApagar = (txt) => String(txt ?? '').trim() === PALAVRA_APAGAR;
 
 export const acoes = {
@@ -93,7 +96,7 @@ export const acoes = {
     let novo;
     try { novo = ensaiarRestauracao(texto, api.hoje); } catch { api.avisar('Backup inválido'); return; }
     const n = novo.pac.length;
-    if (!globalThis.confirm(`Substituir os dados atuais por este backup (${n} ${n === 1 ? 'leito' : 'leitos'})?`)) return;
+    if (!globalThis.confirm(textoConfirmaRestaurar(n))) return;
     if (api.atualizar(() => novo)) api.avisar('Backup restaurado.');
   },
   'apagar-exemplos': (ev, el, api) => {

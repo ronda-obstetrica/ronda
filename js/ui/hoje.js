@@ -1,7 +1,8 @@
 // Aba Hoje: alertas vermelhos/amarelos de todos os leitos e pendências agrupadas por situação.
-// As ações (feito, aguardando, dose, virar pendência) são as mesmas do Censo, pelos mesmos data-act.
+// As ações (feito, aguardando, dose, virar pendência) são as mesmas do Censo, pelos mesmos data-act;
+// tocar no leito abre a página da paciente.
 import { esc } from './util.js';
-import { htmlPend, prefixoAlerta } from './cartao.js';
+import { htmlPend, prefixoAlerta, htmlLeitoLink } from './cartao.js';
 import { acoes as acoesCenso, htmlBannerErros } from './censo.js';
 import { ordenarPacientes } from '../nucleo/estado.js';
 import { avaliarAlertas, ordenarAlertas } from '../nucleo/alertas.js';
@@ -26,7 +27,7 @@ export function alertasDeTodos(estado, hoje, ctx) {
 function htmlAlertaHoje(a) {
   const d = `data-id="${esc(a.pac.id)}" data-regra="${esc(a.regraId)}"`;
   return `<li class="alerta ${esc(a.nivel)}">
-    <p><b class="pend-leito">Leito ${esc(a.pac.leito)}</b> <span class="prefixo">${prefixoAlerta(a)}</span> ${esc(a.msg)}</p>
+    <p>${htmlLeitoLink(a.pac)} <span class="prefixo">${prefixoAlerta(a)}</span> ${esc(a.msg)}</p>
     ${a.fonte ? `<p class="fonte">Fonte: ${esc(a.fonte)}</p>` : ''}
     <div class="acoes-linha">
       <button type="button" class="sec" data-act="alerta-feito" ${d}>Feito</button>

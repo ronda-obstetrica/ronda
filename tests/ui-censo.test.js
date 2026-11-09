@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { novoEstado, seedExemplos, novaPaciente } from '../js/nucleo/estado.js';
 import { contexto } from '../js/nucleo/contexto.js';
-import { htmlCenso } from '../js/ui/censo.js';
+import { htmlCenso, htmlFaixaLeito } from '../js/ui/censo.js';
 import { textoDatacao, htmlCadastro } from '../js/ui/formularios.js';
 import { esc } from '../js/ui/util.js';
 
@@ -16,33 +16,36 @@ test('esc escapa os caracteres de HTML', () => {
   assert.equal(esc(null), '');
 });
 
-test('censo do seed: 3 cartões em ordem natural, alergia e alertas com prefixo', () => {
+test('censo do seed: 3 faixas em ordem natural, com IG, alertas vermelhos e pendências', () => {
   const estado = comSeed();
   const html = htmlCenso({ estado, ctx: contexto(estado), hoje: HOJE }, AGORA);
-  const leitos = [...html.matchAll(/Leito (\d+)<\/h2>/g)].map((m) => m[1]);
+  const leitos = [...html.matchAll(/class="fx-leito">Leito (\d+)</g)].map((m) => m[1]);
   assert.deepEqual(leitos, ['04', '07', '09']);
-  assert.match(html, /<strong>⚠ Alergia:<\/strong> Dipirona/);
-  assert.match(html, /▲ AGIR:/);
-  assert.match(html, /data-act="mod"[^>]*data-mod="gravidade"[^>]*aria-pressed="true"/);
+  assert.equal((html.match(/data-act="abrir-paciente" data-id="[^"]+"/g) || []).length, 3);
   assert.match(html, /31\+2 sem/);
-  assert.match(html, /Controles de hoje/); // 04 (DHEG) e 07 (DMG)
-  assert.doesNotMatch(html, /Erro|undefined|NaN/);
+  assert.match(html, /\d+ alertas? vermelhos?/);
+  assert.match(html, /\d+ pendências?/);
+  assert.doesNotMatch(html, /Alergia|Controles de hoje|data-act="mod"|undefined|NaN/); // detalhes ficam na página da paciente
 });
 
-test('controles só aparecem com medidas para o diagnóstico', () => {
-  const estado = { ...novoEstado(), pac: [novaPaciente({ leito: '12', dxs: [{ dx: 'rpmo', mods: {} }] })] };
-  const html = htmlCenso({ estado, ctx: contexto(estado), hoje: HOJE }, AGORA);
-  assert.doesNotMatch(html, /Controles de hoje/);
-  assert.match(html, /IG não informada/);
+test('faixa de leito: iniciais, IG, siglas e escape', () => {
+  const pac = novaPaciente({ leito: '<1>', iniciais: 'M<A', igDays: 31 * 7 + 2, igRef: HOJE, dxs: [{ dx: 'dheg', mods: {} }] });
+  const h = htmlFaixaLeito(pac, { hoje: HOJE, ctx: contexto({ ...novoEstado(), pac: [pac] }) });
+  assert.match(h, /^<button type="button" class="faixa-leito" data-act="abrir-paciente" data-id="[^"]+">/);
+  assert.ok(h.includes('Leito &lt;1&gt;'));
+  assert.ok(h.includes('M&lt;A'));
+  assert.ok(!h.includes('M<A'));
+  assert.match(h, /31\+2 sem/);
+  assert.match(h, /DHEG/);
+  const sem = htmlFaixaLeito({ ...pac, iniciais: '' }, { hoje: HOJE, ctx: contexto({ ...novoEstado(), pac: [pac] }) });
+  assert.doesNotMatch(sem, /fx-ini/);
 });
 
-test('textos da usuária são escapados no cartão', () => {
-  const estado = { ...novoEstado(), pac: [novaPaciente({ leito: '<1>', alerg: 'a & <b>', obs: '<script>x</script>', dxs: [{ dx: 'outro', mods: {} }] })] };
+test('censo vazio mostra a orientação e o botão + Paciente', () => {
+  const estado = novoEstado();
   const html = htmlCenso({ estado, ctx: contexto(estado), hoje: HOJE }, AGORA);
-  assert.ok(!html.includes('<script>'));
-  assert.ok(html.includes('&lt;script&gt;x&lt;/script&gt;'));
-  assert.ok(html.includes('Leito &lt;1&gt;'));
-  assert.ok(html.includes('a &amp; &lt;b&gt;'));
+  assert.match(html, /Nenhuma paciente/);
+  assert.match(html, /data-act="novo"/);
 });
 
 test('faixa de erro das regras do serviço', () => {

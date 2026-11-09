@@ -16,6 +16,12 @@ export const AVISO_LGPD = 'Não escreva nomes ou dados que identifiquem a pacien
 
 export const acharPac = (estado, id) => estado.pac.find((p) => p.id === id);
 
+// Ação que só roda se a paciente do data-id ainda existe: fn(pac, el, api, ev).
+export const comPac = (fn) => (ev, el, api) => {
+  const pac = acharPac(api.estado, el.dataset.id);
+  if (pac) fn(pac, el, api, ev);
+};
+
 // Mutação para api.atualizar que altera só uma paciente.
 export const mudarPac = (id, fn) => (estado) => ({
   ...estado,
