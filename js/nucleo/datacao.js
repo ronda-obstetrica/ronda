@@ -25,8 +25,8 @@ export function sugerirDatacao({ dum, usg } = {}, hoje) {
 }
 
 export function aplicarDatacao(pac, datacao, hoje) {
-  const igDays = datacao.escolhida === 'usg'
-    ? igPorUSG(datacao.usg.data, datacao.usg.igDias, hoje)
-    : igPorDUM(datacao.dum, hoje);
+  const igDays = datacao.escolhida === 'ig' ? datacao.igDigitada
+    : datacao.escolhida === 'usg' ? igPorUSG(datacao.usg.data, datacao.usg.igDias, hoje)
+      : igPorDUM(datacao.dum, hoje);
   return { ...pac, datacao, igDays, igRef: hoje };
 }

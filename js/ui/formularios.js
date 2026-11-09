@@ -3,7 +3,7 @@
 import { esc, campoLivre, acharPac, mudarPac, modVisivel } from './util.js';
 import { NOME_ESCOLHA } from './cartao.js';
 import { dxDef, listaDx, validarNovoDx, criarDx, alternarMod } from '../nucleo/diagnosticos.js';
-import { parseIG, fmtIG } from '../nucleo/datas.js';
+import { parseIG, fmtIG, lerIGDigitada, igHoje } from '../nucleo/datas.js';
 import { sugerirDatacao, aplicarDatacao } from '../nucleo/datacao.js';
 import { novaPaciente, cortar, LIMITE_OBS, LIMITE_RES, LIMITE_PAR, LIMITE_INICIAIS } from '../nucleo/estado.js';
 import { concluir, remover } from '../nucleo/pendencias.js';
@@ -19,7 +19,7 @@ const botoesForm = (salvar = 'Salvar', focoNoBotao = false) => `<div class="acoe
 // ---------- Datação (DUM x 1ª USG) ----------
 
 // Texto "pela DUM: X · pela USG: Y · sugerido: Z (diferença N dias > L)" e a datação pronta para aplicar.
-export function textoDatacao({ dum = '', usgData = '', usgIG = '' }, hoje) {
+export function textoDatacao({ dum = '', usgData = '', usgIG = '', igHoje = '' }, hoje) {
   const igTxt = String(usgIG ?? '').trim();
   const igDias = igTxt ? parseIG(igTxt) : null;
   let erro = null;
@@ -28,19 +28,25 @@ export function textoDatacao({ dum = '', usgData = '', usgIG = '' }, hoje) {
   else if (igTxt && igDias === null) erro = 'IG da USG inválida — use semanas+dias, ex.: 31+2.';
   else if (Boolean(usgData) !== Boolean(igTxt)) erro = 'Para usar a 1ª USG, preencha a data e a IG naquele dia.';
   const usg = usgData && igDias !== null ? { data: usgData, igDias } : null;
-  const sug = sugerirDatacao({ dum: dum || null, usg }, hoje);
-  if (!sug) return { texto: '', erro, sug: null, dum: dum || null, usg };
+  const ig = lerIGDigitada(igHoje);
+  if (ig.erro && !erro) erro = ig.erro;
+  const igDigitada = ig.dias ?? null;
+  let sug = sugerirDatacao({ dum: dum || null, usg }, hoje);
+  if (!sug && igDigitada !== null) sug = { fonte: 'ig', igDumHoje: null, igUsgHoje: null, diferenca: null, limite: null };
+  if (!sug) return { texto: '', erro, sug: null, dum: dum || null, usg, igDigitada };
   const partes = [];
   if (sug.igDumHoje !== null) partes.push(`pela DUM: ${fmtIG(sug.igDumHoje)}`);
   if (sug.igUsgHoje !== null) partes.push(`pela USG: ${fmtIG(sug.igUsgHoje)}`);
   if (sug.diferenca !== null) {
     partes.push(`sugerido: ${sug.fonte.toUpperCase()} (diferença ${sug.diferenca} dias ${sug.diferenca > sug.limite ? '>' : '≤'} ${sug.limite})`);
   }
-  return { texto: partes.join(' · '), erro, sug, dum: dum || null, usg };
+  if (igDigitada !== null) partes.push(`IG hoje: ${fmtIG(igDigitada)}`);
+  const disponiveis = [dum && 'dum', usg && 'usg', igDigitada !== null && 'ig'].filter(Boolean);
+  return { texto: partes.join(' · '), erro, sug, dum: dum || null, usg, igDigitada, disponiveis };
 }
 
 function lerDatacao(form) {
-  return { dum: form.elements.dum.value, usgData: form.elements.usgData.value, usgIG: form.elements.usgIG.value };
+  return { dum: form.elements.dum.value, usgData: form.elements.usgData.value, usgIG: form.elements.usgIG.value, igHoje: form.elements.igHoje?.value ?? '' };
 }
 
 function atualizarDatacao(form, hoje) {
@@ -48,10 +54,13 @@ function atualizarDatacao(form, hoje) {
   const prev = form.querySelector('.datacao-preview');
   prev.textContent = r.erro ? `${r.texto ? r.texto + ' — ' : ''}${r.erro}` : r.texto;
   prev.classList.toggle('erro', Boolean(r.erro));
-  const ambos = r.sug?.diferenca != null;
-  form.querySelector('.datacao-escolha').hidden = !ambos;
-  if (ambos && form.dataset.escolhaManual !== '1') {
-    form.querySelector(`input[name="escolhida"][value="${r.sug.fonte}"]`).checked = true;
+  const disp = r.disponiveis ?? [];
+  form.querySelector('.datacao-escolha').hidden = disp.length < 2;
+  for (const rd of form.querySelectorAll('input[name="escolhida"]')) rd.closest('label').hidden = !disp.includes(rd.value);
+  if (disp.length >= 2) {
+    const marcado = form.querySelector('input[name="escolhida"]:checked')?.value;
+    const alvo = form.dataset.escolhaManual === '1' && disp.includes(marcado) ? marcado : r.sug.fonte;
+    form.querySelector(`input[name="escolhida"][value="${alvo}"]`).checked = true;
   }
 }
 
@@ -127,9 +136,12 @@ function criarDxForm(mini, api) {
 export function htmlCadastro(pac, hoje) {
   const d = pac?.datacao ?? {};
   const num = (nome, rot, v, max) => `<label class="campo">${rot}<input type="number" name="${nome}" inputmode="numeric" min="0" max="${max}" value="${esc(v ?? '')}"></label>`;
-  const dat = textoDatacao({ dum: d.dum ?? '', usgData: d.usg?.data ?? '', usgIG: d.usg ? fmtIG(d.usg.igDias) : '' }, hoje);
-  const escolhida = d.escolhida ?? dat.sug?.fonte ?? 'dum';
-  const radio = (v, rot) => `<label class="chip"><input type="radio" name="escolhida" value="${v}" data-input="datacao-escolha"${escolhida === v ? ' checked' : ''}> ${rot}</label>`;
+  const igAtual = d.escolhida === 'ig' && pac ? igHoje(pac, hoje) : null;
+  const igTxt = igAtual != null && igAtual >= 0 ? fmtIG(igAtual) : '';
+  const dat = textoDatacao({ dum: d.dum ?? '', usgData: d.usg?.data ?? '', usgIG: d.usg ? fmtIG(d.usg.igDias) : '', igHoje: igTxt }, hoje);
+  const disp = dat.disponiveis ?? [];
+  const escolhida = disp.includes(d.escolhida) ? d.escolhida : dat.sug?.fonte ?? 'dum';
+  const radio = (v, rot) => `<label class="chip"${disp.includes(v) ? '' : ' hidden'}><input type="radio" name="escolhida" value="${v}" data-input="datacao-escolha"${escolhida === v ? ' checked' : ''}> ${rot}</label>`;
   return `<form class="form-pac" data-submit="paciente-salvar" data-id="${esc(pac?.id ?? '')}"${d.escolhida ? ' data-escolha-manual="1"' : ''} novalidate>
     <h2>${pac ? `Editar leito ${esc(pac.leito)}` : 'Nova paciente'}</h2>
     <p class="nota">Identifique só pelo leito. Obrigatórios: leito e um diagnóstico.</p>
@@ -154,8 +166,9 @@ export function htmlCadastro(pac, hoje) {
         <label class="campo">1ª USG — data<input type="date" name="usgData" max="${esc(hoje)}" value="${esc(d.usg?.data ?? '')}" data-input="datacao"></label>
         <label class="campo">IG na USG<input name="usgIG" placeholder="31+2" autocomplete="off" value="${esc(d.usg ? fmtIG(d.usg.igDias) : '')}" data-input="datacao"></label>
       </div>
+      <label class="campo">IG hoje<input name="igHoje" placeholder="31+2" inputmode="text" autocomplete="off" value="${esc(igTxt)}" data-input="datacao"></label>
       <p class="datacao-preview${dat.erro ? ' erro' : ''}" aria-live="polite">${esc(dat.erro ? `${dat.texto ? dat.texto + ' — ' : ''}${dat.erro}` : dat.texto)}</p>
-      <div class="datacao-escolha"${dat.sug?.diferenca != null ? '' : ' hidden'}><span>Usar:</span>${radio('dum', 'DUM')}${radio('usg', 'USG')}</div>
+      <div class="datacao-escolha"${disp.length >= 2 ? '' : ' hidden'}><span>Usar:</span>${radio('dum', 'DUM')}${radio('usg', 'USG')}${radio('ig', 'IG hoje')}</div>
     </fieldset>
     ${num("idade", "Idade", pac?.idade, 70)}
     <label class="campo">Paridade<input name="par" maxlength="${LIMITE_PAR}" placeholder="G2P1C1A0" autocomplete="off" value="${esc(pac?.par ?? '')}"></label>
@@ -190,7 +203,8 @@ function salvarPaciente(ev, form, api) {
   }
   const dat = textoDatacao(lerDatacao(form), hoje);
   if (dat.erro) { api.avisar(dat.erro); return; }
-  const escolhida = dat.sug?.diferenca != null ? (form.querySelector('input[name="escolhida"]:checked')?.value ?? dat.sug.fonte) : dat.sug?.fonte;
+  const marcada = form.querySelector('input[name="escolhida"]:checked')?.value;
+  const escolhida = (dat.disponiveis?.length ?? 0) >= 2 && dat.disponiveis.includes(marcada) ? marcada : dat.sug?.fonte;
   const dados = {
     leito, dxs,
     idade: inteiro(el.idade.value, 70),
@@ -203,7 +217,7 @@ function salvarPaciente(ev, form, api) {
   const ok = api.atualizar((estado) => {
     const antigo = id ? estado.pac.find((p) => p.id === id) : null;
     let pac = antigo ? { ...antigo, ...dados } : novaPaciente(dados);
-    if (dat.sug) pac = aplicarDatacao(pac, { dum: dat.dum, usg: dat.usg, escolhida }, hoje);
+    if (dat.sug) pac = aplicarDatacao(pac, { dum: dat.dum, usg: dat.usg, escolhida, ...(dat.igDigitada !== null ? { igDigitada: dat.igDigitada } : {}) }, hoje);
     return { ...estado, pac: antigo ? estado.pac.map((p) => (p.id === id ? pac : p)) : [...estado.pac, pac] };
   });
   api.fecharFolha();

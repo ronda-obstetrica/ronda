@@ -22,6 +22,20 @@ export function parseIG(txt) {
   return Number(m[1]) * 7 + Number(m[2] ?? 0);
 }
 
+export const ERRO_IG_DIGITADA = 'Use semanas+dias, ex.: 31+2';
+
+// IG digitada pela usuária: '31+2', '31 2' ou '31' (= 31+0). Vazio = não informado ({ dias: null }).
+export function lerIGDigitada(txt) {
+  const t = String(txt ?? '').trim();
+  if (!t) return { dias: null };
+  const m = /^(\d{1,2})(?:\s*\+\s*|\s+)(\d)$|^(\d{1,2})$/.exec(t);
+  if (!m) return { erro: ERRO_IG_DIGITADA };
+  const sem = Number(m[1] ?? m[3]);
+  const d = Number(m[2] ?? 0);
+  if (sem > 44 || d > 6) return { erro: ERRO_IG_DIGITADA };
+  return { dias: sem * 7 + d };
+}
+
 export function fmtIG(dias) {
   return `${Math.floor(dias / 7)}+${dias % 7}`;
 }
