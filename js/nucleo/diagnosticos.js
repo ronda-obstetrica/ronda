@@ -54,8 +54,12 @@ export const DIAGNOSTICOS = {
 
 const ROTULO_REMOVIDO = 'Diagnóstico removido';
 let custom = {};
+let bruto = [];
+
+export const obterDxCustom = () => bruto;
 
 export function definirDxCustom(lista) {
+  bruto = Array.isArray(lista) ? lista : [];
   custom = {};
   for (const it of Array.isArray(lista) ? lista : []) {
     if (!it || typeof it.id !== 'string' || Object.hasOwn(DIAGNOSTICOS, it.id)) continue;

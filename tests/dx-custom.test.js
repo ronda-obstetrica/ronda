@@ -89,3 +89,14 @@ test('migrar: par e iniciais viram texto e são cortados', () => {
   assert.equal(m.pac[1].par.length, 20);
   assert.equal(m.pac[1].iniciais, '');
 });
+
+test('ensaio de restauração não deixa o registro do backup ativo', async () => {
+  const { ensaiarRestauracao } = await import('../js/ui/dados.js');
+  const { exportarJSON } = await import('../js/nucleo/estado.js');
+  const vivo = criarDx(novoEstado(), { nome: 'Pielonefrite', sigla: 'PNF' });
+  const id = vivo.dxCustom[0].id;
+  contexto(vivo);
+  const backup = criarDx(novoEstado(), { nome: 'Outro', sigla: 'OUT' });
+  ensaiarRestauracao(exportarJSON(backup), '2026-11-08');
+  assert.equal(rotuloCurto({ dx: id, mods: {} }), 'PNF');
+});

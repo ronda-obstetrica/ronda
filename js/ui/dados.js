@@ -3,6 +3,7 @@ import { esc, ddmm } from './util.js';
 import { compartilharArquivo } from './compartilhar.js';
 import { exportarJSON, importarJSON, apagarExemplos, novoEstado } from '../nucleo/estado.js';
 import { contexto } from '../nucleo/contexto.js';
+import { definirDxCustom, obterDxCustom } from '../nucleo/diagnosticos.js';
 import { gerarPendenciasPorIG } from '../nucleo/pendencias.js';
 import { htmlCenso } from './censo.js';
 import { htmlHoje } from './hoje.js';
@@ -50,6 +51,7 @@ export function render(raiz, dados) {
 // Lança 'Backup inválido' se o backup não puder ser usado pelo app.
 export function ensaiarRestauracao(texto, hoje) {
   const novo = importarJSON(texto);
+  const registro = obterDxCustom();
   try {
     const c = contexto(novo);
     const pronto = { ...novo, pac: novo.pac.map((p) => gerarPendenciasPorIG(p, hoje, c.regras)) };
@@ -58,6 +60,8 @@ export function ensaiarRestauracao(texto, hoje) {
   } catch (e) {
     console.error(e);
     throw new Error('Backup inválido');
+  } finally {
+    definirDxCustom(registro);
   }
   return novo;
 }

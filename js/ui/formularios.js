@@ -109,8 +109,13 @@ function criarDxForm(mini, api) {
   };
   const selects = [...form.querySelectorAll('select[data-campo="dx"]')];
   for (const sel of selects) opcao(sel);
-  const livre = selects.find((s) => !s.value) ?? selects.at(-1);
-  if (livre) { livre.value = novo.id; livre.closest('.dx-bloco').querySelector('.dx-mods').innerHTML = ''; }
+  let livre = selects.find((s) => !s.value);
+  if (!livre) {
+    form.querySelector('.dx-lista').insertAdjacentHTML('beforeend', htmlDxBloco(null));
+    livre = form.querySelector('.dx-lista .dx-bloco:last-child select[data-campo="dx"]');
+  }
+  livre.value = novo.id;
+  livre.closest('.dx-bloco').querySelector('.dx-mods').innerHTML = '';
   mini.hidden = true;
   mini.querySelector('[data-dx-nome]').value = '';
   mini.querySelector('[data-dx-sigla]').value = '';
@@ -134,8 +139,8 @@ export function htmlCadastro(pac, hoje) {
       <button type="button" class="sec" data-act="dx-add">+ diagnóstico</button>
       <button type="button" class="sec" data-act="dx-novo">+ Novo diagnóstico</button>
       <div class="dx-novo" hidden>
-        <label class="campo">Nome por extenso<input data-dx-nome maxlength="40" autocomplete="off"></label>
-        <label class="campo">Sigla<input data-dx-sigla maxlength="6" autocomplete="off"></label>
+        <label class="campo">Nome por extenso<input form="sem-form" data-dx-nome maxlength="40" autocomplete="off"></label>
+        <label class="campo">Sigla<input form="sem-form" data-dx-sigla maxlength="6" autocomplete="off"></label>
         <p class="erro dx-novo-erro" role="alert" aria-live="polite"></p>
         <div class="acoes-form">
           <button type="button" class="sec" data-act="dx-novo-cancelar">Cancelar</button>
@@ -171,9 +176,6 @@ const inteiro = (v, max) => {
 
 function salvarPaciente(ev, form, api) {
   const hoje = api.hoje;
-  // Enter dentro do mini-formulário de novo diagnóstico cria o diagnóstico, não salva a paciente.
-  const mini = form.querySelector('.dx-novo:not([hidden])');
-  if (mini?.contains(globalThis.document?.activeElement)) { criarDxForm(mini, api); return; }
   const id = form.dataset.id || null;
   const el = form.elements;
   const leito = cortar(el.leito.value, LIMITE_LEITO);

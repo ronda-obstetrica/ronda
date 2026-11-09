@@ -2,6 +2,7 @@
 import { hojeISO } from './nucleo/datas.js';
 import { carregar, salvar, lerBruto, mudouFora, CHAVE } from './nucleo/estado.js';
 import { contexto } from './nucleo/contexto.js';
+import { definirDxCustom } from './nucleo/diagnosticos.js';
 import { gerarPendenciasPorIG } from './nucleo/pendencias.js';
 import { esc, atualizarContador, AVISO_FALHA_SALVAR } from './ui/util.js';
 import * as censo from './ui/censo.js';
@@ -100,6 +101,7 @@ const api = {
 };
 
 function render(est = estado, c = ctx) {
+  definirDxCustom(est?.dxCustom ?? []);
   for (const b of document.querySelectorAll('.abas [data-aba]')) {
     if (b.dataset.aba === aba) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   }
