@@ -75,7 +75,11 @@ function migrarPaciente(p) {
     iniciais: cortar(typeof resto.iniciais === 'string' ? resto.iniciais : '', LIMITE_INICIAIS),
     meds: Array.isArray(resto.meds) ? resto.meds : [],
     prog: typeof resto.prog === 'string' ? resto.prog : '',
-    sugDispensadas: Array.isArray(resto.sugDispensadas) ? resto.sugDispensadas : [],
+    // Séries de regra já dispensadas/removidas antes não voltam como sugestão.
+    sugDispensadas: [...new Set([
+      ...(Array.isArray(resto.sugDispensadas) ? resto.sugDispensadas : []),
+      ...(Array.isArray(resto.dispensadas) ? resto.dispensadas : []).filter((d) => typeof d === 'string').map((d) => `regra:${d}`),
+    ])],
   };
 }
 

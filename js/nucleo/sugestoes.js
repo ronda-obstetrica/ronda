@@ -13,8 +13,17 @@ export function sugestoes(pac, estado, hoje, ctx) {
   const chavesPend = new Set((pac.pend ?? []).map(chavePend));
   const usadas = new Set((pac.pend ?? []).map((p) => p.sug).filter(Boolean));
   const origens = new Set((pac.pend ?? []).map((p) => p.origem));
-  const livre = (chave, texto, cat) => !dispensadas.has(chave) && !usadas.has(chave)
-    && !chavesPend.has(chavePend({ texto, cat }));
+  // Item igual (texto+categoria) a um dispensado também fica escondido, mesmo vindo de outro dx.
+  const itensDispensados = new Set();
+  for (const dx of new Set((pac.dxs ?? []).map((d) => d.dx))) {
+    for (const it of parseProtocolo(estado.prot?.[dx] ?? '').itens) {
+      if (dispensadas.has(chaveSugProt(dx, it.texto))) itensDispensados.add(chavePend(it));
+    }
+  }
+  const livre = (chave, texto, cat) => {
+    const k = chavePend({ texto, cat });
+    return !dispensadas.has(chave) && !usadas.has(chave) && !chavesPend.has(k) && !itensDispensados.has(k);
+  };
   const out = [];
   const vistos = new Set();
   for (const { dx } of pac.dxs ?? []) {
@@ -22,7 +31,7 @@ export function sugestoes(pac, estado, hoje, ctx) {
     vistos.add(dx);
     for (const it of parseProtocolo(estado.prot?.[dx] ?? '').itens) {
       const chave = chaveSugProt(dx, it.texto);
-      if (!livre(chave, it.texto, it.cat) || out.some((s) => s.chave === chave)) continue;
+      if (!livre(chave, it.texto, it.cat) || out.some((s) => chavePend(s) === chavePend(it))) continue;
       out.push({ chave, texto: it.texto, cat: it.cat, dias: it.dias, rep: it.rep, dur: it.dur, fonte: 'protocolo', dxId: dx });
     }
   }
@@ -38,6 +47,8 @@ export function sugestoes(pac, estado, hoje, ctx) {
 }
 
 export function aceitarSugestao(pac, sug, hoje) {
+  const k = chavePend(sug);
+  if (pac.pend.some((p) => !p.done && chavePend(p) === k)) return pac;
   const due = addDias(hoje, sug.dias ?? 0);
   const p = novaPendencia({
     texto: sug.texto, cat: sug.cat, due, rep: sug.rep ?? 0,
