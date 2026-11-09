@@ -6,7 +6,7 @@ import { dxDef, listaDx, validarNovoDx, criarDx, alternarMod } from '../nucleo/d
 import { parseIG, fmtIG } from '../nucleo/datas.js';
 import { sugerirDatacao, aplicarDatacao } from '../nucleo/datacao.js';
 import { novaPaciente, cortar, LIMITE_OBS, LIMITE_RES, LIMITE_PAR, LIMITE_INICIAIS } from '../nucleo/estado.js';
-import { aplicarProtocolo, parseProtocolo, concluir, remover } from '../nucleo/pendencias.js';
+import { concluir, remover } from '../nucleo/pendencias.js';
 import { registrarAlertaFeito } from '../nucleo/alertas.js';
 
 const LIMITE_LEITO = 6;
@@ -204,11 +204,6 @@ function salvarPaciente(ev, form, api) {
     const antigo = id ? estado.pac.find((p) => p.id === id) : null;
     let pac = antigo ? { ...antigo, ...dados } : novaPaciente(dados);
     if (dat.sug) pac = aplicarDatacao(pac, { dum: dat.dum, usg: dat.usg, escolhida }, hoje);
-    // Protocolo só para diagnósticos novos: reaplicar a um antigo recriaria itens já concluídos.
-    const jaTinha = new Set((antigo?.dxs ?? []).map((d) => d.dx));
-    for (const d of dxs) {
-      if (!jaTinha.has(d.dx)) pac = aplicarProtocolo(pac, parseProtocolo(estado.prot?.[d.dx] ?? '').itens, hoje);
-    }
     return { ...estado, pac: antigo ? estado.pac.map((p) => (p.id === id ? pac : p)) : [...estado.pac, pac] };
   });
   api.fecharFolha();

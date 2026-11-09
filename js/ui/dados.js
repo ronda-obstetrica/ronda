@@ -4,7 +4,6 @@ import { compartilharArquivo } from './compartilhar.js';
 import { exportarJSON, importarJSON, apagarExemplos, novoEstado } from '../nucleo/estado.js';
 import { contexto } from '../nucleo/contexto.js';
 import { definirDxCustom, obterDxCustom } from '../nucleo/diagnosticos.js';
-import { gerarPendenciasPorIG } from '../nucleo/pendencias.js';
 import { htmlCenso } from './censo.js';
 import { htmlHoje } from './hoje.js';
 
@@ -54,7 +53,7 @@ export function ensaiarRestauracao(texto, hoje) {
   const registro = obterDxCustom();
   try {
     const c = contexto(novo);
-    const pronto = { ...novo, pac: novo.pac.map((p) => gerarPendenciasPorIG(p, hoje, c.regras)) };
+    const pronto = novo;
     htmlCenso({ estado: pronto, ctx: c, hoje });
     htmlHoje({ estado: pronto, ctx: c, hoje });
   } catch (e) {

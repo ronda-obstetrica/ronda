@@ -3,7 +3,6 @@ import { hojeISO } from './nucleo/datas.js';
 import { carregar, salvar, lerBruto, mudouFora, CHAVE } from './nucleo/estado.js';
 import { contexto } from './nucleo/contexto.js';
 import { definirDxCustom } from './nucleo/diagnosticos.js';
-import { gerarPendenciasPorIG } from './nucleo/pendencias.js';
 import { esc, atualizarContador, AVISO_FALHA_SALVAR } from './ui/util.js';
 import * as censo from './ui/censo.js';
 import * as telaHoje from './ui/hoje.js';
@@ -73,7 +72,7 @@ function atualizar(mutacao, { gravar = true } = {}) {
     const novo = mutacao(estado);
     if (!novo) return false;
     novoCtx = contexto(novo);
-    novoEstado = { ...novo, pac: novo.pac.map((p) => gerarPendenciasPorIG(p, hoje, novoCtx.regras)) };
+    novoEstado = novo;
     render(novoEstado, novoCtx);
   } catch (e) {
     console.error(e);

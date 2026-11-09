@@ -151,6 +151,7 @@ export function concluir(pac, pendId, hoje, res = '') {
     const due = addDias(hoje, alvo.rep);
     const cand = novaPendencia({
       texto: alvo.texto, cat: alvo.cat, due, rep: alvo.rep, origem: alvo.origem,
+      ...(alvo.sug ? { sug: alvo.sug } : {}),
       dur: alvo.dur ? inicioDur({ total: alvo.dur.total, unidade: alvo.dur.unidade, ...(alvo.dur.intervaloDias ? { intervaloDias: alvo.dur.intervaloDias } : {}) }, due) : null,
     });
     const resto = pac.pend.map((p) => (p.id === pendId ? { ...p, done: true } : p));
@@ -184,12 +185,8 @@ export function marcarAguardando(pac, pendId, hoje) {
 export function remover(pac, pendId) {
   const alvo = pac.pend.find((p) => p.id === pendId);
   if (!alvo) return pac;
-  const out = { ...pac, pend: pac.pend.filter((p) => p.id !== pendId) };
-  if (alvo.origem !== 'manual' && alvo.origem !== 'protocolo') {
-    const disp = pac.dispensadas ?? [];
-    out.dispensadas = disp.includes(alvo.origem) ? disp : [...disp, alvo.origem];
-  }
-  return out;
+  // Não vai para `dispensadas`: a sugestão de origem volta a aparecer (dispensadas é só de alertas).
+  return { ...pac, pend: pac.pend.filter((p) => p.id !== pendId) };
 }
 
 function parseLocal(iso) {
@@ -234,6 +231,15 @@ export function registrarDose(pac, pendId, hoje) {
   });
 }
 
+// Heurística de categoria e janela de IG das regras de pendência (compartilhada com sugestoes.js).
+export const catDaRegra = (r) => (/CTG|Hemograma/.test(r.msg) ? 'Exame' : 'Avaliação');
+
+export function regraNaJanela(r, pac, ig) {
+  if (r.tipo !== 'pendencia' || ig === null) return false;
+  if (!casaAlvo(r.alvo, pac.dxs)) return false;
+  return !(ig < r.ini || (r.fim !== null && r.fim !== undefined && ig > r.fim));
+}
+
 export function gerarPendenciasPorIG(pac, hoje, regras) {
   const ig = igHoje(pac, hoje);
   if (ig === null) return pac;
@@ -241,11 +247,9 @@ export function gerarPendenciasPorIG(pac, hoje, regras) {
   const disp = pac.dispensadas ?? [];
   const ehRegra = new Set(regras.map((r) => r.id));
   for (const r of regras) {
-    if (r.tipo !== 'pendencia') continue;
-    if (!casaAlvo(r.alvo, pac.dxs)) continue;
-    if (ig < r.ini || (r.fim !== null && r.fim !== undefined && ig > r.fim)) continue;
+    if (!regraNaJanela(r, pac, ig)) continue;
     if (disp.includes(r.id) || pend.some((p) => p.origem === r.id)) continue;
-    const cat = /CTG|Hemograma/.test(r.msg) ? 'Exame' : 'Avaliação';
+    const cat = catDaRegra(r);
     const nova = novaPendencia({ texto: r.msg, cat, due: hoje, rep: r.repetir ?? 0, origem: r.id });
     // Séries de outras regras não bloqueiam (troca de série); manuais/protocolo sim.
     const k = chavePend(nova);

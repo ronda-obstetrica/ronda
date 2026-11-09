@@ -127,6 +127,18 @@ test('remover: manual some e não vai a dispensadas', () => {
   assert.deepEqual(p.dispensadas, []);
 });
 
+test('remover pendência de regra não vai a dispensadas (a sugestão volta)', () => {
+  const q = pac0({ pend: [novaPendencia({ id: 'z', texto: 'x', origem: 'ctg-dmg-a2' })] });
+  assert.deepEqual(remover(q, 'z').dispensadas, []);
+});
+
+test('concluir recorrente mantém sug na próxima', () => {
+  const q = pac0({ pend: [novaPendencia({ id: 'z', texto: 'x', rep: 3, due: HOJE, sug: 'regra:r' })] });
+  const r = concluir(q, 'z', HOJE);
+  assert.equal(r.pend.length, 2);
+  assert.equal(r.pend[1].sug, 'regra:r');
+});
+
 const DMG = (mods) => [{ dx: 'dmg', mods }];
 test('gerarPendenciasPorIG: CTG semanal, idempotente, remover, troca de série', () => {
   const base = pac0({ igDays: 32 * 7, dxs: DMG({ medicacao: true }) });
@@ -138,8 +150,7 @@ test('gerarPendenciasPorIG: CTG semanal, idempotente, remover, troca de série',
   assert.equal(p.pend[0].origem, 'ctg-dmg-a2');
   assert.equal(p.pend[0].due, HOJE);
   assert.equal(gerarPendenciasPorIG(p, HOJE, REGRAS_GLOBAIS).pend.length, 1);
-  const r = remover(p, p.pend[0].id);
-  assert.deepEqual(r.dispensadas, ['ctg-dmg-a2']);
+  const r = { ...remover(p, p.pend[0].id), dispensadas: ['ctg-dmg-a2'] }; // legado: dispensadas antigas ainda valem
   assert.equal(gerarPendenciasPorIG(r, HOJE, REGRAS_GLOBAIS).pend.length, 0);
   const t = gerarPendenciasPorIG({ ...p, dxs: DMG({ medicacao: true, 'dm-previo': true }) }, HOJE, REGRAS_GLOBAIS);
   assert.equal(t.pend.length, 2);
