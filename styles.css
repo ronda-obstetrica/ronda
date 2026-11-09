@@ -362,3 +362,9 @@ code { font-family: var(--mono); font-size: .85em; overflow-wrap: anywhere; }
   box-shadow: 0 6px 20px rgb(0 0 0 / .25);
 }
 .atualizar[hidden] { display: none; }
+
+.dx-novo { margin-top: .5rem; padding: .5rem; border: 1px dashed var(--borda, currentColor); border-radius: 8px; }
+.dx-novo[hidden] { display: none; }
+.dx-novo input { font-size: 1rem; min-height: 44px; }
+.dx-novo-erro { color: var(--red); font-weight: 600; margin: .25rem 0; }
+.dx-novo-erro:empty { display: none; }

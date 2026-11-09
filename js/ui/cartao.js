@@ -1,6 +1,6 @@
 // HTML do cartão de um leito (Censo). Puro: recebe dados, devolve string com textos escapados.
 import { esc, ddmm, modVisivel } from './util.js';
-import { DIAGNOSTICOS } from '../nucleo/diagnosticos.js';
+import { dxDef } from '../nucleo/diagnosticos.js';
 import { resumoPaciente } from '../relatorios/comum.js';
 import { MEDIDAS, MEDIDAS_POR_DX, avaliarRegistro } from '../nucleo/faixas.js';
 import { classificarHoje, progressoTratamento } from '../nucleo/pendencias.js';
@@ -37,7 +37,7 @@ function htmlCabecalho(pac, r) {
 
 export function htmlDiagnosticos(pac) {
   const blocos = pac.dxs.map((item, i) => {
-    const def = DIAGNOSTICOS[item.dx];
+    const def = dxDef(item.dx);
     const mods = item.mods || {};
     const botoes = (def?.mods ?? []).filter((m) => modVisivel(m, mods)).map((m) => {
       const dados = { id: pac.id, i, mod: m.id };
@@ -49,7 +49,7 @@ export function htmlDiagnosticos(pac) {
       const on = mods[m.id] === true;
       return btn('mod', dados, `${on ? '✓ ' : '+ '}${m.curto}`, ` class="mod${on ? ' ligado' : ''}" aria-pressed="${on}"`);
     }).join('');
-    return `<div class="dx"><span class="dx-nome">${esc(def?.nome ?? item.dx)}</span>${botoes}</div>`;
+    return `<div class="dx"><span class="dx-nome">${esc(def?.nome ?? 'Diagnóstico removido')}</span>${botoes}</div>`;
   }).join('');
   return `<div class="dxs">${blocos}</div>`;
 }

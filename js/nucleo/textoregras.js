@@ -1,5 +1,5 @@
 // Utilitários genéricos para formatos de texto de regras (sem conhecer campos específicos).
-import { DIAGNOSTICOS, tokens } from './diagnosticos.js';
+import { dxDef, tokens } from './diagnosticos.js';
 
 export function dividirLinhas(texto) {
   const saida = [];
@@ -16,7 +16,7 @@ export function parseAlvo(txt) {
   const [parteExige, ...proib] = s.split('!');
   const [dxTxt, ...exige] = parteExige.split('+');
   const dx = dxTxt.trim();
-  if (dx && !Object.hasOwn(DIAGNOSTICOS, dx)) return new Error(`diagnóstico desconhecido: "${dx}"`);
+  if (dx && !dxDef(dx)) return new Error(`diagnóstico desconhecido: "${dx}"`);
   const limpa = l => l.map(x => x.trim()).filter(Boolean);
   return { dx: dx || null, exige: limpa(exige), proibe: limpa(proib) };
 }

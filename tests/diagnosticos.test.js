@@ -38,8 +38,8 @@ test('rotuloExtenso', () => {
 
 test('dx desconhecido não lança', () => {
   assert.deepEqual(tokens({ dx: 'xyz', mods: { a: true } }), ['xyz']);
-  assert.equal(rotuloCurto({ dx: 'xyz' }), 'xyz');
-  assert.equal(rotuloExtenso({ dx: 'xyz' }), 'xyz');
+  assert.equal(rotuloCurto({ dx: 'xyz' }), 'Diagnóstico removido');
+  assert.equal(rotuloExtenso({ dx: 'xyz' }), 'Diagnóstico removido');
 });
 
 test('alternarMod não muta e funciona para liga e escolha', () => {

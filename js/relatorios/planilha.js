@@ -1,6 +1,6 @@
 // Planilha .xlsx do censo (sem identificação de pacientes).
 import { ordenarPacientes } from '../nucleo/estado.js';
-import { DIAGNOSTICOS, partesExtenso } from '../nucleo/diagnosticos.js';
+import { dxDef, partesExtenso } from '../nucleo/diagnosticos.js';
 import { resumoPaciente } from './comum.js';
 
 export const COLUNAS = ['Leito', 'Idade', 'G/P/C/A', 'IG hoje', 'Dia de internação', 'Diagnósticos', 'Modificadores', 'Alergias', 'Alertas ativos', 'Alertas feitos', 'Pendências abertas', 'Pendências atrasadas', 'Aguardando resultado', 'Fora da faixa hoje', 'Observação'];
@@ -17,7 +17,7 @@ function linha(pac, hoje, ctx, agora) {
     r.gpca,
     r.ig,
     r.dia === null ? '' : 'D' + r.dia,
-    juntar(pac.dxs.map(d => DIAGNOSTICOS[d.dx]?.nome ?? d.dx)),
+    juntar(pac.dxs.map(d => dxDef(d.dx)?.nome ?? 'Diagnóstico removido')),
     juntar(pac.dxs.flatMap(partesExtenso)),
     r.alerg,
     juntar(r.alertas.filter(a => a.nivel === 'vermelho' || a.nivel === 'amarelo').map(a => a.msg)),

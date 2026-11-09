@@ -2,7 +2,7 @@
 // Salvar grava só o texto; linhas com erro são ignoradas na avaliação e continuam visíveis aqui.
 import { esc } from './util.js';
 import { copiarTexto } from './compartilhar.js';
-import { DIAGNOSTICOS } from '../nucleo/diagnosticos.js';
+import { dxDef, listaDx, validarNovoDx, renomearDx, excluirDx } from '../nucleo/diagnosticos.js';
 import { parseProtocolo, PROT_PADRAO } from '../nucleo/pendencias.js';
 import { parseRegras, REGRAS_GLOBAIS_TEXTO } from '../nucleo/regras.js';
 import { parseFaixas, FAIXAS_GLOBAIS_TEXTO } from '../nucleo/faixas.js';
@@ -64,14 +64,17 @@ function htmlEditor({ tipo, dx = '', salvo, rotulo, rows = 8, extra = '' }) {
 }
 
 function htmlProtDx(estado) {
-  return Object.entries(DIAGNOSTICOS).map(([dx, def]) => {
+  return listaDx().map(([dx, def]) => {
     const texto = textoGravado(estado, 'prot', dx);
     const r = rascunho('prot', dx, texto);
     const sujo = r !== undefined;
     const { itens, erros } = parseProtocolo(sujo ? r : texto);
     const resumo = `${itens.length} ${itens.length === 1 ? 'item' : 'itens'}${erros.length ? ` · ⚠ ${erros.length} com erro` : ''}`;
-    const extra = PROT_PADRAO[dx] !== undefined
-      ? `<button type="button" class="sec" data-act="prot-modelo" data-dx="${esc(dx)}">Restaurar modelo</button>` : '';
+    const extra = def.custom
+      ? `<button type="button" class="sec" data-act="dx-renomear" data-dx="${esc(dx)}">Renomear</button>
+         <button type="button" class="sec perigo" data-act="dx-excluir" data-dx="${esc(dx)}">Excluir</button>`
+      : PROT_PADRAO[dx] !== undefined
+        ? `<button type="button" class="sec" data-act="prot-modelo" data-dx="${esc(dx)}">Restaurar modelo</button>` : '';
     if (sujo) abertos.add(dx);
     return `<details class="prot-dx"${abertos.has(dx) ? ' open' : ''}>
       <summary data-act="prot-secao" data-dx="${esc(dx)}"><b>${esc(def.nome)}</b> <span class="nota">${resumo}</span>${sujo ? ' <span class="nao-salvo">● não salvo</span>' : ''}</summary>
@@ -143,7 +146,7 @@ export const acoes = {
   },
   'prot-salvar': (ev, form, api) => {
     const { tipo, dx } = form.dataset;
-    if (!PARSERS[tipo] || (tipo === 'prot' && !DIAGNOSTICOS[dx])) return;
+    if (!PARSERS[tipo] || (tipo === 'prot' && !dxDef(dx))) return;
     const texto = form.elements.texto.value;
     const n = errosDe(tipo, texto).length;
     if (tipo === 'prot') abertos.add(dx);
@@ -153,6 +156,28 @@ export const acoes = {
       rascunhos.delete(chave(tipo, dx));
       api.avisar(n ? `Salvo. ${n} ${n === 1 ? 'linha com erro será ignorada' : 'linhas com erro serão ignoradas'}.` : 'Salvo.');
     }
+  },
+  'dx-renomear': (ev, el, api) => {
+    const id = el.dataset.dx;
+    const atual = api.estado.dxCustom?.find((d) => d.id === id);
+    if (!atual) return;
+    const nome = globalThis.prompt('Nome por extenso (até 40 caracteres):', atual.nome);
+    if (nome === null) return;
+    const sigla = globalThis.prompt('Sigla (até 6 caracteres):', atual.sigla);
+    if (sigla === null) return;
+    const erro = validarNovoDx(api.estado, { nome, sigla }, id);
+    if (erro) { api.avisar(erro); return; }
+    abertos.add(id);
+    if (api.atualizar((estado) => renomearDx(estado, id, { nome, sigla }))) api.avisar('Diagnóstico renomeado.');
+  },
+  'dx-excluir': (ev, el, api) => {
+    const id = el.dataset.dx;
+    const emUso = api.estado.pac.filter((p) => p.dxs.some((d) => d.dx === id)).length;
+    if (emUso) { api.avisar(`Em uso em ${emUso} leito(s). Remova o diagnóstico dos leitos antes de excluir.`); return; }
+    if (!globalThis.confirm('Excluir este diagnóstico e o protocolo dele?')) return;
+    abertos.delete(id);
+    rascunhos.delete(chave('prot', id));
+    if (api.atualizar((estado) => excluirDx(estado, id))) api.avisar('Diagnóstico excluído.');
   },
   'prot-modelo': (ev, el, api) => {
     const dx = el.dataset.dx;

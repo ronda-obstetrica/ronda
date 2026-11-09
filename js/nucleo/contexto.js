@@ -2,8 +2,10 @@
 import { parseRegras, REGRAS_GLOBAIS } from './regras.js';
 import { parseFaixas, FAIXAS_GLOBAIS } from './faixas.js';
 import { mesclarPorId } from './textoregras.js';
+import { definirDxCustom } from './diagnosticos.js';
 
 export function contexto(estado) {
+  definirDxCustom(estado.dxCustom ?? []);
   const { itens, desligar, erros } = parseRegras(estado.regrasServico ?? '');
   const fx = parseFaixas(estado.faixasServico ?? '');
   return {

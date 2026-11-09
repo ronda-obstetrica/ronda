@@ -8,7 +8,7 @@ import { imprimirHtml } from './imprimir.js';
 import { copiarTexto } from './compartilhar.js';
 import { acoes as acoesPend } from './pendform.js';
 import { ordenarPacientes, precisaLembrarBackup } from '../nucleo/estado.js';
-import { DIAGNOSTICOS, alternarMod } from '../nucleo/diagnosticos.js';
+import { dxDef, alternarMod } from '../nucleo/diagnosticos.js';
 import { avaliarAlertas, desfazerAlertaFeito } from '../nucleo/alertas.js';
 import { pendenciaDeAlerta, desfazer, marcarAguardando, registrarDose } from '../nucleo/pendencias.js';
 import { registrar, parseValor, avaliarRegistro } from '../nucleo/faixas.js';
@@ -58,7 +58,7 @@ export const acoes = {
   mod: comPac((pac, el, api) => {
     const i = Number(el.dataset.i);
     const item = pac.dxs[i];
-    const def = DIAGNOSTICOS[item?.dx]?.mods.find((m) => m.id === el.dataset.mod);
+    const def = dxDef(item?.dx)?.mods.find((m) => m.id === el.dataset.mod);
     if (!def) return;
     if (def.tipo === 'escolha') { api.abrirFolha(htmlEscolha(pac, i, def)); return; }
     api.atualizar(mudarPac(pac.id, (p) => ({ ...p, dxs: p.dxs.map((d, j) => (j === i ? alternarMod(d, def.id) : d)) })));

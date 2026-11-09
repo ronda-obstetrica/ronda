@@ -2,7 +2,7 @@
 // e a lista pequena das escolhas de modificador. HTML puro + ações; DOM só dentro das ações.
 import { esc, campoLivre, acharPac, mudarPac, modVisivel } from './util.js';
 import { NOME_ESCOLHA } from './cartao.js';
-import { DIAGNOSTICOS, alternarMod } from '../nucleo/diagnosticos.js';
+import { dxDef, listaDx, validarNovoDx, criarDx, alternarMod } from '../nucleo/diagnosticos.js';
 import { parseIG, fmtIG } from '../nucleo/datas.js';
 import { sugerirDatacao, aplicarDatacao } from '../nucleo/datacao.js';
 import { novaPaciente, cortar, LIMITE_OBS, LIMITE_RES, LIMITE_PAR, LIMITE_INICIAIS } from '../nucleo/estado.js';
@@ -58,7 +58,7 @@ function atualizarDatacao(form, hoje) {
 // ---------- Diagnósticos no formulário ----------
 
 export function htmlModsForm(item) {
-  const def = DIAGNOSTICOS[item?.dx];
+  const def = dxDef(item?.dx);
   if (!def) return '';
   const mods = item.mods || {};
   return def.mods.filter((m) => modVisivel(m, mods)).map((m) => {
@@ -72,10 +72,12 @@ export function htmlModsForm(item) {
 }
 
 function htmlDxBloco(item) {
-  const ops = Object.entries(DIAGNOSTICOS).map(([id, d]) => `<option value="${esc(id)}"${item?.dx === id ? ' selected' : ''}>${esc(d.nome)}</option>`).join('');
+  const ops = listaDx().map(([id, d]) => `<option value="${esc(id)}"${item?.dx === id ? ' selected' : ''}>${esc(d.nome)}</option>`).join('');
+  // Dx já gravado mas removido do registro: mantém a opção para não perder a escolha ao reabrir.
+  const orfao = item?.dx && !dxDef(item.dx) ? `<option value="${esc(item.dx)}" selected>Diagnóstico removido</option>` : '';
   return `<div class="dx-bloco">
     <div class="linha">
-      <select data-campo="dx" data-input="dx-form" aria-label="Diagnóstico"><option value="">— diagnóstico —</option>${ops}</select>
+      <select data-campo="dx" data-input="dx-form" aria-label="Diagnóstico"><option value="">— diagnóstico —</option>${ops}${orfao}</select>
       <button type="button" class="icone" data-act="dx-remover" aria-label="Remover diagnóstico">×</button>
     </div>
     <div class="dx-mods">${htmlModsForm(item)}</div>
@@ -89,6 +91,30 @@ function lerDx(bloco) {
     if (el.type === 'checkbox') { if (el.checked) mods[el.dataset.mod] = true; } else if (el.value) mods[el.dataset.mod] = el.value;
   }
   return { dx, mods };
+}
+
+function criarDxForm(mini, api) {
+  const dados = { nome: mini.querySelector('[data-dx-nome]').value, sigla: mini.querySelector('[data-dx-sigla]').value };
+  const erro = validarNovoDx(api.estado, dados);
+  const alvo = mini.querySelector('.dx-novo-erro');
+  alvo.textContent = erro ?? '';
+  if (erro) return;
+  if (!api.atualizar((estado) => criarDx(estado, dados))) return;
+  const novo = api.estado.dxCustom.at(-1);
+  const form = mini.closest('form');
+  const opcao = (sel) => {
+    const o = globalThis.document.createElement('option');
+    o.value = novo.id; o.textContent = novo.sigla;
+    sel.append(o);
+  };
+  const selects = [...form.querySelectorAll('select[data-campo="dx"]')];
+  for (const sel of selects) opcao(sel);
+  const livre = selects.find((s) => !s.value) ?? selects.at(-1);
+  if (livre) { livre.value = novo.id; livre.closest('.dx-bloco').querySelector('.dx-mods').innerHTML = ''; }
+  mini.hidden = true;
+  mini.querySelector('[data-dx-nome]').value = '';
+  mini.querySelector('[data-dx-sigla]').value = '';
+  api.avisar(`Diagnóstico ${novo.sigla} criado.`);
 }
 
 // ---------- Cadastro ----------
@@ -106,6 +132,16 @@ export function htmlCadastro(pac, hoje) {
     <fieldset><legend>Diagnósticos *</legend>
       <div class="dx-lista">${(pac?.dxs?.length ? pac.dxs : [null]).map(htmlDxBloco).join('')}</div>
       <button type="button" class="sec" data-act="dx-add">+ diagnóstico</button>
+      <button type="button" class="sec" data-act="dx-novo">+ Novo diagnóstico</button>
+      <div class="dx-novo" hidden>
+        <label class="campo">Nome por extenso<input data-dx-nome maxlength="40" autocomplete="off"></label>
+        <label class="campo">Sigla<input data-dx-sigla maxlength="6" autocomplete="off"></label>
+        <p class="erro dx-novo-erro" role="alert" aria-live="polite"></p>
+        <div class="acoes-form">
+          <button type="button" class="sec" data-act="dx-novo-cancelar">Cancelar</button>
+          <button type="button" class="primario" data-act="dx-novo-salvar">Criar</button>
+        </div>
+      </div>
     </fieldset>
     <fieldset><legend>Idade gestacional</legend>
       <label class="campo">DUM<input type="date" name="dum" max="${esc(hoje)}" value="${esc(d.dum ?? '')}" data-input="datacao"></label>
@@ -135,6 +171,9 @@ const inteiro = (v, max) => {
 
 function salvarPaciente(ev, form, api) {
   const hoje = api.hoje;
+  // Enter dentro do mini-formulário de novo diagnóstico cria o diagnóstico, não salva a paciente.
+  const mini = form.querySelector('.dx-novo:not([hidden])');
+  if (mini?.contains(globalThis.document?.activeElement)) { criarDxForm(mini, api); return; }
   const id = form.dataset.id || null;
   const el = form.elements;
   const leito = cortar(el.leito.value, LIMITE_LEITO);
@@ -200,7 +239,7 @@ export function htmlEscolha(pac, i, mod) {
   const atual = pac.dxs[i]?.mods?.[mod.id];
   const op = (valor, rotulo) => `<button type="button" class="opcao${atual === valor || (!atual && !valor) ? ' ligado' : ''}" aria-pressed="${atual === valor || (!atual && !valor)}"
     data-act="mod-op" data-id="${esc(pac.id)}" data-i="${esc(i)}" data-mod="${esc(mod.id)}" data-valor="${esc(valor)}">${rotulo}</button>`;
-  return `<h2>${esc(NOME_ESCOLHA[mod.id] ?? mod.id)} — ${esc(DIAGNOSTICOS[pac.dxs[i].dx]?.nome ?? '')}</h2>
+  return `<h2>${esc(NOME_ESCOLHA[mod.id] ?? mod.id)} — ${esc(dxDef(pac.dxs[i].dx)?.nome ?? '')}</h2>
     <p class="nota">Leito ${esc(pac.leito)}</p>
     <div class="opcoes">${mod.opcoes.map((o) => op(o.id, `<b>${esc(o.curto)}</b> ${esc(o.extenso)}`)).join('')}${op('', 'Não definido')}</div>
     <div class="acoes-form"><button type="button" class="sec" data-act="fechar-folha">Cancelar</button></div>`;
@@ -215,6 +254,17 @@ export const acoes = {
     if (pac) api.abrirFolha(htmlCadastro(pac, api.hoje));
   },
   'dx-add': (ev, el) => el.closest('fieldset').querySelector('.dx-lista').insertAdjacentHTML('beforeend', htmlDxBloco(null)),
+  'dx-novo': (ev, el) => {
+    const mini = el.closest('fieldset').querySelector('.dx-novo');
+    mini.hidden = false;
+    mini.querySelector('[data-dx-nome]').focus();
+  },
+  'dx-novo-cancelar': (ev, el) => {
+    const mini = el.closest('.dx-novo');
+    mini.hidden = true;
+    mini.querySelector('.dx-novo-erro').textContent = '';
+  },
+  'dx-novo-salvar': (ev, el, api) => criarDxForm(el.closest('.dx-novo'), api),
   'dx-remover': (ev, el) => el.closest('.dx-bloco').remove(),
   // input: troca de diagnóstico ou de escolha redesenha os modificadores (visivelSe).
   'dx-form': (ev, el) => {

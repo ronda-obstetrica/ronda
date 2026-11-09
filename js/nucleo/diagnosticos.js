@@ -50,6 +50,67 @@ export const DIAGNOSTICOS = {
   outro: { nome: 'Outro', extenso: 'Outro', mods: [] },
 };
 
+// ---------- Diagnósticos criados pela usuária ----------
+
+const ROTULO_REMOVIDO = 'Diagnóstico removido';
+let custom = {};
+
+export function definirDxCustom(lista) {
+  custom = {};
+  for (const it of Array.isArray(lista) ? lista : []) {
+    if (!it || typeof it.id !== 'string' || Object.hasOwn(DIAGNOSTICOS, it.id)) continue;
+    custom[it.id] = { nome: String(it.sigla ?? ''), extenso: String(it.nome ?? ''), mods: [], custom: true };
+  }
+}
+
+export function dxDef(id) {
+  if (typeof id !== 'string') return null;
+  if (Object.hasOwn(DIAGNOSTICOS, id)) return DIAGNOSTICOS[id];
+  return Object.hasOwn(custom, id) ? custom[id] : null;
+}
+
+export const listaDx = () => [...Object.entries(DIAGNOSTICOS), ...Object.entries(custom)];
+
+const chaveSigla = (s) => String(s ?? '').trim().toLowerCase();
+
+export function validarNovoDx(estado, { nome, sigla }, ignorarId = null) {
+  const n = String(nome ?? '').trim();
+  const s = String(sigla ?? '').trim();
+  if (!n || n.length > 40) return 'Informe o nome (até 40 caracteres).';
+  if (!s || s.length > 6) return 'Informe a sigla (até 6 caracteres).';
+  const k = chaveSigla(s);
+  const usada = Object.values(DIAGNOSTICOS).some((d) => chaveSigla(d.nome) === k)
+    || (estado?.dxCustom ?? []).some((d) => d.id !== ignorarId && chaveSigla(d.sigla) === k);
+  return usada ? 'Já existe um diagnóstico com essa sigla.' : null;
+}
+
+const slug = (s) => String(s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dx';
+
+export function criarDx(estado, { nome, sigla }) {
+  const base = `u-${slug(sigla)}`;
+  const ocupados = new Set([...Object.keys(DIAGNOSTICOS), ...(estado.dxCustom ?? []).map((d) => d.id)]);
+  let id = base;
+  for (let i = 2; ocupados.has(id); i++) id = `${base}-${i}`;
+  return {
+    ...estado,
+    dxCustom: [...(estado.dxCustom ?? []), { id, nome: String(nome).trim(), sigla: String(sigla).trim() }],
+    prot: { ...estado.prot, [id]: '' },
+  };
+}
+
+export function renomearDx(estado, id, { nome, sigla }) {
+  return {
+    ...estado,
+    dxCustom: (estado.dxCustom ?? []).map((d) => (d.id === id ? { ...d, nome: String(nome).trim(), sigla: String(sigla).trim() } : d)),
+  };
+}
+
+export function excluirDx(estado, id) {
+  if ((estado.pac ?? []).some((p) => (p.dxs ?? []).some((d) => d.dx === id))) return null;
+  const { [id]: _, ...prot } = estado.prot ?? {};
+  return { ...estado, dxCustom: (estado.dxCustom ?? []).filter((d) => d.id !== id), prot };
+}
+
 function visivel(mod, mods) {
   if (!mod.visivelSe) return true;
   return Object.entries(mod.visivelSe).every(([k, v]) => mods[k] === v);
@@ -57,7 +118,7 @@ function visivel(mod, mods) {
 
 // Partes ativas, em ordem de catálogo: [{ mod, opcao? }]
 function partesAtivas(item) {
-  const def = DIAGNOSTICOS[item?.dx];
+  const def = dxDef(item?.dx);
   if (!def) return [];
   const mods = item.mods || {};
   const out = [];
@@ -79,16 +140,16 @@ export function tokens(item) {
 }
 
 export function rotuloCurto(item) {
-  const def = DIAGNOSTICOS[item.dx];
-  if (!def) return item.dx;
+  const def = dxDef(item.dx);
+  if (!def) return ROTULO_REMOVIDO;
   return [def.nome, ...partesAtivas(item).map((p) => (p.opcao ? p.opcao.curto : p.mod.curto))].join(' · ');
 }
 
 export function rotuloExtenso(item) {
-  const def = DIAGNOSTICOS[item.dx];
-  if (!def) return item.dx;
+  const def = dxDef(item.dx);
+  if (!def) return ROTULO_REMOVIDO;
   let partes = partesAtivas(item);
-  let base = def.nome;
+  let base = def.custom ? def.extenso : def.nome;
   if (item.dx === 'dheg') {
     const i = partes.findIndex((p) => p.mod.id === 'tipo');
     if (i >= 0) {
@@ -103,7 +164,7 @@ export function rotuloExtenso(item) {
 
 export function alternarMod(item, modId, valor) {
   const mods = { ...(item.mods || {}) };
-  const mod = DIAGNOSTICOS[item.dx]?.mods.find((m) => m.id === modId);
+  const mod = dxDef(item.dx)?.mods.find((m) => m.id === modId);
   if (mod?.tipo === 'escolha') {
     if (valor === undefined || valor === null || valor === '') delete mods[modId];
     else mods[modId] = valor;
