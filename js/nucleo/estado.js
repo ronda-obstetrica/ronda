@@ -28,6 +28,25 @@ export function cortar(txt, max) {
   return String(txt ?? '').trim().slice(0, max);
 }
 
+export function normalizarPrevistos(v) {
+  const n = typeof v === 'string' && v.trim() !== '' ? Number(v) : v;
+  return Number.isInteger(n) && n > 0 && n <= 365 ? n : null;
+}
+
+// Normaliza uma medicação vinda de fora (backup); devolve null se inutilizável.
+export function normalizarMed(m) {
+  if (!m || typeof m !== 'object' || Array.isArray(m)) return null;
+  const texto = cortar(m.texto, LIMITE_MED);
+  if (!texto) return null;
+  return {
+    id: typeof m.id === 'string' && m.id ? m.id : novoId(),
+    texto,
+    inicio: typeof m.inicio === 'string' ? m.inicio : null,
+    previstos: normalizarPrevistos(m.previstos),
+    contar: m.contar !== false,
+  };
+}
+
 function novoId() {
   return globalThis.crypto.randomUUID().slice(0, 8);
 }
@@ -73,7 +92,7 @@ function migrarPaciente(p) {
     ...resto,
     par: cortar(typeof par === 'string' ? par : '', LIMITE_PAR),
     iniciais: cortar(typeof resto.iniciais === 'string' ? resto.iniciais : '', LIMITE_INICIAIS),
-    meds: Array.isArray(resto.meds) ? resto.meds : [],
+    meds: Array.isArray(resto.meds) ? resto.meds.map(normalizarMed).filter(Boolean) : [],
     prog: typeof resto.prog === 'string' ? resto.prog : '',
     // Séries de regra já dispensadas/removidas antes não voltam como sugestão.
     sugDispensadas: [...new Set([

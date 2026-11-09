@@ -33,3 +33,32 @@ test('novaMed corta o texto; adicionar/editar/remover', () => {
   removerMed(p, m.id);
   assert.deepEqual(p.meds, []);
 });
+
+test('previstos inválidos viram null; editarMed não troca id', () => {
+  for (const v of [-3, 2.5, 0, 'abc', 400]) assert.equal(novaMed({ texto: 'x', previstos: v }).previstos, null);
+  assert.equal(novaMed({ texto: 'x', previstos: '7' }).previstos, 7);
+  const p = novaPaciente({ id: 'p' }); const m = ce(); adicionarMed(p, m);
+  editarMed(p, m.id, { id: 'outro', previstos: -1 });
+  assert.equal(p.meds[0].id, m.id); assert.equal(p.meds[0].previstos, null);
+});
+test('diaMed/rotuloMed toleram não-objetos; contar ausente = true', () => {
+  assert.equal(diaMed(null, '2026-11-08'), null);
+  assert.equal(rotuloMed('x', '2026-11-08'), '');
+  assert.equal(diaMed({ texto: 'a', inicio: '2026-11-06' }, '2026-11-08').d, 3);
+});
+test('backup com meds malformadas: importa, relatórios não quebram', async () => {
+  const { importarJSON, novoEstado } = await import('../js/nucleo/estado.js');
+  const { textoPlantao } = await import('../js/relatorios/texto.js');
+  const { htmlFichas } = await import('../js/relatorios/ficha.js');
+  const { linhasPlanilha } = await import('../js/relatorios/planilha.js');
+  const { contexto } = await import('../js/nucleo/contexto.js');
+  const e = { ...novoEstado(), pac: [novaPaciente({ id: 'x', leito: '01', meds: [null, 'x', {}, { texto: 'Ok', previstos: '7', inicio: 5 }] })] };
+  const r = importarJSON(JSON.stringify(e));
+  const est = r.estado ?? r;
+  assert.deepEqual(est.pac[0].meds.map(m => [m.texto, m.previstos, m.inicio]), [['Ok', 7, null]]);
+  const ctx = contexto(est), ag = new Date('2026-11-08T12:00');
+  assert.ok(textoPlantao(est, '2026-11-08', ctx, ag).includes('Medicações: Ok'));
+  htmlFichas(est, '2026-11-08', ctx, { agora: ag }); linhasPlanilha(est, '2026-11-08', ctx, ag);
+  est.pac[0].meds = [];
+  assert.ok(!textoPlantao(est, '2026-11-08', ctx, ag).includes('Medicações:'));
+});
