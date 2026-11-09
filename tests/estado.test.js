@@ -45,7 +45,7 @@ test('JSON corrompido preservado e aviso', () => {
   const { estado, aviso } = carregar(st);
   assert.equal(st.d[CHAVE_CORROMPIDO], '{quebrado');
   assert.match(aviso, /corrompido/);
-  assert.equal(estado.v, 2);
+  assert.equal(estado.v, 3);
   assert.equal(estado.pac.length, 3);
 });
 

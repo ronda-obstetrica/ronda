@@ -27,7 +27,7 @@ test('conteúdo dos leitos 07 e 09, sem Obs vazio', () => {
 test('IG não informada', () => {
   const p = novaPaciente({ id: 'x', leito: '01', int: '2026-11-01', dxs: [{ dx: 'dmg', mods: {} }] });
   const t = gerar(mkEst([p]));
-  assert.ok(t.includes('LEITO 01 · IG não informada · D4 · G0P0C0A0'));
+  assert.ok(t.includes('LEITO 01 · IG não informada · D4'));
 });
 test('+2 anteriores com 7 feitos', () => {
   const pend = Array.from({ length: 7 }, (_, i) => novaPendencia({ id: 'f' + i, texto: 'Item' + i, done: true, doneAt: `2026-11-0${i + 1}`, res: 'ok' }));

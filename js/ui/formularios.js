@@ -5,7 +5,7 @@ import { NOME_ESCOLHA } from './cartao.js';
 import { DIAGNOSTICOS, alternarMod } from '../nucleo/diagnosticos.js';
 import { parseIG, fmtIG } from '../nucleo/datas.js';
 import { sugerirDatacao, aplicarDatacao } from '../nucleo/datacao.js';
-import { novaPaciente, cortar, LIMITE_OBS, LIMITE_RES } from '../nucleo/estado.js';
+import { novaPaciente, cortar, LIMITE_OBS, LIMITE_RES, LIMITE_PAR, LIMITE_INICIAIS } from '../nucleo/estado.js';
 import { aplicarProtocolo, parseProtocolo, concluir, remover } from '../nucleo/pendencias.js';
 import { registrarAlertaFeito } from '../nucleo/alertas.js';
 
@@ -116,7 +116,9 @@ export function htmlCadastro(pac, hoje) {
       <p class="datacao-preview${dat.erro ? ' erro' : ''}" aria-live="polite">${esc(dat.erro ? `${dat.texto ? dat.texto + ' — ' : ''}${dat.erro}` : dat.texto)}</p>
       <div class="datacao-escolha"${dat.sug?.diferenca != null ? '' : ' hidden'}><span>Usar:</span>${radio('dum', 'DUM')}${radio('usg', 'USG')}</div>
     </fieldset>
-    <div class="linha5">${num('idade', 'Idade', pac?.idade, 70)}${num('g', 'G', pac?.g, 30)}${num('p', 'P', pac?.p, 30)}${num('c', 'C', pac?.c, 30)}${num('a', 'A', pac?.a, 30)}</div>
+    ${num("idade", "Idade", pac?.idade, 70)}
+    <label class="campo">Paridade<input name="par" maxlength="${LIMITE_PAR}" placeholder="G2P1C1A0" autocomplete="off" value="${esc(pac?.par ?? '')}"></label>
+    <label class="campo">Iniciais<input name="iniciais" maxlength="${LIMITE_INICIAIS}" autocomplete="off" value="${esc(pac?.iniciais ?? '')}"><span class="nota">Fica só neste celular; não vai para relatórios nem backup.</span></label>
     <label class="campo">Internação<input type="date" name="int" max="${esc(hoje)}" value="${esc(pac?.int || hoje)}"></label>
     <label class="campo">Alergias<input name="alerg" maxlength="${LIMITE_ALERG}" autocomplete="off" value="${esc(pac?.alerg ?? '')}"></label>
     ${campoLivre({ nome: 'obs', rotulo: 'Observação', valor: pac?.obs ?? '', max: LIMITE_OBS, multilinha: true })}
@@ -151,7 +153,8 @@ function salvarPaciente(ev, form, api) {
   const dados = {
     leito, dxs,
     idade: inteiro(el.idade.value, 70),
-    g: inteiro(el.g.value, 30), p: inteiro(el.p.value, 30), c: inteiro(el.c.value, 30), a: inteiro(el.a.value, 30),
+    par: cortar(el.par.value, LIMITE_PAR),
+    iniciais: cortar(el.iniciais.value, LIMITE_INICIAIS),
     int: el.int.value || hoje,
     alerg: cortar(el.alerg.value, LIMITE_ALERG),
     obs: cortar(el.obs.value, LIMITE_OBS),

@@ -29,7 +29,7 @@ function apiFalsa({ salvarOk }) {
 }
 
 function formPaciente(leito, dx) {
-  const campos = { leito, dum: '', usgData: '', usgIG: '', idade: '', g: '', p: '', c: '', a: '', int: HOJE, alerg: '', obs: '' };
+  const campos = { leito, dum: '', usgData: '', usgIG: '', idade: '', par: '', iniciais: '', int: HOJE, alerg: '', obs: '' };
   const elements = Object.fromEntries(Object.entries(campos).map(([k, v]) => [k, { value: v, focus() {} }]));
   const bloco = { querySelector: () => ({ value: dx }), querySelectorAll: () => [] };
   return { dataset: { id: '' }, elements, querySelectorAll: () => [bloco], querySelector: () => null };
@@ -82,7 +82,7 @@ test('Remover com falha ao salvar não mostra sucesso', () => {
 test('cadastro escapa valores vindos de um backup importado', () => {
   const xss = '"><img src=x onerror=alert(1)>';
   const pac = novaPaciente({
-    leito: xss, idade: xss, g: xss, p: xss, c: xss, a: xss, int: xss, alerg: xss, obs: xss,
+    leito: xss, idade: xss, par: xss, iniciais: xss, int: xss, alerg: xss, obs: xss,
     datacao: { dum: xss, usg: { data: xss, igDias: xss }, escolhida: 'usg' },
     dxs: [{ dx: 'dheg', mods: { tipo: xss } }],
   });

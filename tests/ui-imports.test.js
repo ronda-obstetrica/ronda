@@ -60,7 +60,7 @@ test('formularios.js exporta acoes do cadastro e das folhas', async () => {
 test('nenhum campo de identificação no cadastro', async () => {
   const { htmlCadastro } = await import('../js/ui/formularios.js');
   const html = htmlCadastro(null, '2026-11-08').toLowerCase();
-  for (const proibido of ['nome', 'inicia', 'prontu', 'nascim', 'telefone', 'hospital']) {
+  for (const proibido of ['nome', 'prontu', 'nascim', 'telefone', 'hospital']) {
     assert.ok(!new RegExp(`name="[^"]*${proibido}`).test(html), `campo proibido: ${proibido}`);
   }
 });

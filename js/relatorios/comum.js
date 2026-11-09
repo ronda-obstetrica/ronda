@@ -53,14 +53,13 @@ const fmtValor = v => (v && typeof v === 'object' ? `${v.s}x${v.d}` : String(v))
 export function resumoPaciente(pac, hoje, ctx, agora = new Date()) {
   const ig = igHoje(pac, hoje);
   const cl = classificarHoje(pac, hoje);
-  const gpca = [pac.g, pac.p, pac.c, pac.a];
   const nomes = Object.fromEntries(MEDIDAS.map(m => [m.id, m.nome]));
   return {
     leito: pac.leito,
     ig: ig === null ? 'IG não informada' : fmtIG(ig),
     dia: pac.int ? diffDias(pac.int, hoje) + 1 : null,
     idade: pac.idade ?? null,
-    gpca: gpca.every(v => v == null) ? null : `G${pac.g ?? 0}P${pac.p ?? 0}C${pac.c ?? 0}A${pac.a ?? 0}`,
+    gpca: pac.par || null,
     dxCurto: pac.dxs.map(rotuloCurto),
     dxExtenso: pac.dxs.map(rotuloExtenso),
     alerg: pac.alerg ?? '',
