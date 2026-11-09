@@ -70,8 +70,9 @@ function migrarPaciente(p) {
     par = vals.every((v) => v == null) ? '' : `G${g ?? 0}P${pp ?? 0}C${c ?? 0}A${a ?? 0}`;
   }
   return {
-    ...resto, par,
-    iniciais: typeof resto.iniciais === 'string' ? resto.iniciais : '',
+    ...resto,
+    par: cortar(typeof par === 'string' ? par : '', LIMITE_PAR),
+    iniciais: cortar(typeof resto.iniciais === 'string' ? resto.iniciais : '', LIMITE_INICIAIS),
     meds: Array.isArray(resto.meds) ? resto.meds : [],
     prog: typeof resto.prog === 'string' ? resto.prog : '',
     sugDispensadas: Array.isArray(resto.sugDispensadas) ? resto.sugDispensadas : [],
