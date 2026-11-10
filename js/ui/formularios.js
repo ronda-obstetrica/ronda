@@ -49,7 +49,7 @@ function lerDatacao(form) {
   return { dum: form.elements.dum.value, usgData: form.elements.usgData.value, usgIG: form.elements.usgIG.value, igHoje: form.elements.igHoje?.value ?? '' };
 }
 
-function atualizarDatacao(form, hoje) {
+function atualizarDatacao(form, hoje, forcar = null) {
   const r = textoDatacao(lerDatacao(form), hoje);
   const prev = form.querySelector('.datacao-preview');
   prev.textContent = r.erro ? `${r.texto ? r.texto + ' — ' : ''}${r.erro}` : r.texto;
@@ -59,7 +59,8 @@ function atualizarDatacao(form, hoje) {
   for (const rd of form.querySelectorAll('input[name="escolhida"]')) rd.closest('label').hidden = !disp.includes(rd.value);
   if (disp.length >= 2) {
     const marcado = form.querySelector('input[name="escolhida"]:checked')?.value;
-    const alvo = form.dataset.escolhaManual === '1' && disp.includes(marcado) ? marcado : r.sug.fonte;
+    const alvo = forcar && disp.includes(forcar) ? forcar
+      : form.dataset.escolhaManual === '1' && disp.includes(marcado) ? marcado : r.sug.fonte;
     form.querySelector(`input[name="escolhida"][value="${alvo}"]`).checked = true;
   }
 }
@@ -137,7 +138,8 @@ export function htmlCadastro(pac, hoje) {
   const d = pac?.datacao ?? {};
   const num = (nome, rot, v, max) => `<label class="campo">${rot}<input type="number" name="${nome}" inputmode="numeric" min="0" max="${max}" value="${esc(v ?? '')}"></label>`;
   const igAtual = d.escolhida === 'ig' && pac ? igHoje(pac, hoje) : null;
-  const igTxt = igAtual != null && igAtual >= 0 ? fmtIG(igAtual) : '';
+  // Sem prefill quando o valor seria recusado (ex.: além de 44+6), para não travar a edição.
+  const igTxt = igAtual != null && igAtual >= 0 && lerIGDigitada(fmtIG(igAtual)).dias != null ? fmtIG(igAtual) : '';
   const dat = textoDatacao({ dum: d.dum ?? '', usgData: d.usg?.data ?? '', usgIG: d.usg ? fmtIG(d.usg.igDias) : '', igHoje: igTxt }, hoje);
   const disp = dat.disponiveis ?? [];
   const escolhida = disp.includes(d.escolhida) ? d.escolhida : dat.sug?.fonte ?? 'dum';
@@ -285,7 +287,12 @@ export const acoes = {
     if (el.dataset.campo === 'dx') item.mods = {};
     bloco.querySelector('.dx-mods').innerHTML = htmlModsForm(item);
   },
-  datacao: (ev, el, api) => atualizarDatacao(el.form, api.hoje),
+  // Digitar uma IG hoje válida passa a ser a fonte usada (até a pessoa escolher outro rádio).
+  datacao: (ev, el, api) => {
+    const digitou = el.name === 'igHoje' && lerIGDigitada(el.value).dias != null;
+    if (digitou) el.form.dataset.escolhaManual = '1';
+    atualizarDatacao(el.form, api.hoje, digitou ? 'ig' : null);
+  },
   'datacao-escolha': (ev, el) => { el.form.dataset.escolhaManual = '1'; },
   'paciente-salvar': salvarPaciente,
   'mod-op': (ev, el, api) => {

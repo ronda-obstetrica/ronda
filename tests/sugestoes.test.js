@@ -102,7 +102,9 @@ test('mesmo item em dois dx aparece uma vez; aceitarTodas não duplica; dispensa
 
 test('migrar semeia sugDispensadas com regra:<id> das dispensadas antigas, idempotente', () => {
   const m = migrar({ v: 2, pac: [{ id: 'a', dispensadas: ['ctg-dmg-a2', 'x'], sugDispensadas: ['regra:x'] }] });
-  assert.deepEqual(m.pac[0].sugDispensadas, ['regra:x', 'regra:ctg-dmg-a2']);
+  assert.deepEqual(m.pac[0].sugDispensadas, ['regra:x']); // já migrado: não remescla (senão restaurar não valeria)
+  const legado = migrar({ v: 2, pac: [{ id: 'b', dispensadas: ['ctg-dmg-a2', 'x'] }] });
+  assert.deepEqual(legado.pac[0].sugDispensadas, ['regra:ctg-dmg-a2', 'regra:x']);
   assert.deepEqual(migrar(m).pac[0].sugDispensadas, m.pac[0].sugDispensadas);
 });
 

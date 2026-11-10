@@ -67,3 +67,14 @@ test('carregar migra v2', () => {
   assert.equal(estado.v, 3); assert.equal(estado.pac[0].par, 'G2P1C1A0');
   assert.equal(CHAVE, 'ronda-obstetrica-v2');
 });
+
+test('migrar é idempotente: sugestão restaurada não volta a ser dispensada', async () => {
+  const { restaurarSugestao } = await import('../js/nucleo/sugestoes.js');
+  const e1 = migrar(v2([pv2({ dispensadas: ['corticoide'], sugDispensadas: undefined })]));
+  assert.deepEqual(e1.pac[0].sugDispensadas, ['regra:corticoide']);
+  assert.deepEqual(e1.pac[0].dispensadas, ['corticoide']);
+  const rest = restaurarSugestao(e1.pac[0], 'regra:corticoide');
+  const e2 = migrar({ ...e1, pac: [rest] });
+  assert.deepEqual(e2.pac[0].sugDispensadas, []);
+  assert.deepEqual(e2.pac[0].dispensadas, ['corticoide']);
+});

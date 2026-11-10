@@ -298,3 +298,16 @@ test('iniciais aparecem na página; nunca no texto do plantão', async () => {
   assert.ok(html(e2, p.id).includes('QZK'));
   assert.ok(!textoPlantao(e2, HOJE, contexto(e2)).includes('QZK'));
 });
+
+test('formulário de medicação: dias previstos some com "Contar dias" desmarcado', () => {
+  const p = pacDo(comSeed(), '04');
+  assert.doesNotMatch(htmlMedForm(p, null, HOJE), /previstos-campo"[^>]*hidden/);
+  const g = htmlMedForm(p, novaMed({ texto: 'X', contar: false }), HOJE);
+  assert.match(g, /previstos-campo"[^>]*hidden/);
+  const campo = { hidden: false }; const inp = { disabled: false };
+  const form = { querySelector: (q) => (q === '.previstos-campo' ? campo : inp) };
+  acoes['med-contar'](null, { checked: false, form }, {});
+  assert.equal(campo.hidden, true); assert.equal(inp.disabled, true);
+  acoes['med-contar'](null, { checked: true, form }, {});
+  assert.equal(campo.hidden, false); assert.equal(inp.disabled, false);
+});

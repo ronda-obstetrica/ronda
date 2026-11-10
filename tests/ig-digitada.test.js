@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { lerIGDigitada, igHoje, addDias } from '../js/nucleo/datas.js';
-import { novoEstado } from '../js/nucleo/estado.js';
+import { novoEstado, novaPaciente } from '../js/nucleo/estado.js';
 import { contexto } from '../js/nucleo/contexto.js';
 import { acoes as forms, textoDatacao, htmlCadastro } from '../js/ui/formularios.js';
 
@@ -80,4 +80,61 @@ test('cadastro tem o campo IG hoje com 16px de fonte garantida pelo css e rádio
   const html = htmlCadastro(null, HOJE);
   assert.match(html, /name="igHoje" placeholder="31\+2" inputmode="text"/);
   assert.match(html, /value="ig"/);
+});
+
+function formDOM({ dum = '', igHoje: ig = '', manual = false } = {}) {
+  const campos = { leito: '12', dum, usgData: '', usgIG: '', igHoje: ig, idade: '', par: '', iniciais: '', int: HOJE, alerg: '', obs: '' };
+  const elements = Object.fromEntries(Object.entries(campos).map(([k, v]) => [k, { value: v, focus() {} }]));
+  const radios = ['dum', 'usg', 'ig'].map((value) => ({ value, closest: () => ({ hidden: false }) }));
+  let sel = 'dum'; // grupo de rádios: marcar um desmarca os outros
+  for (const r of radios) Object.defineProperty(r, 'checked', { get: () => sel === r.value, set: (v) => { if (v) sel = r.value; } });
+  const bloco = { querySelector: () => ({ value: 'rpmo' }), querySelectorAll: () => [] };
+  const prev = { textContent: '', classList: { toggle() {} } };
+  const escolha = { hidden: true };
+  const form = {
+    dataset: { id: '', ...(manual ? { escolhaManual: '1' } : {}) }, elements,
+    querySelectorAll: (q) => (q === '.dx-bloco' ? [bloco] : radios),
+    querySelector: (q) => {
+      if (q === '.datacao-preview') return prev;
+      if (q === '.datacao-escolha') return escolha;
+      if (q.includes(':checked')) return radios.find((r) => r.checked) ?? null;
+      return radios.find((r) => q.includes(`value="${r.value}"`)) ?? null;
+    },
+  };
+  elements.igHoje.form = form; elements.igHoje.name = 'igHoje';
+  return { form, radios, el: elements.igHoje };
+}
+const marcado = (radios) => radios.find((r) => r.checked).value;
+
+test('com DUM, digitar IG válida seleciona a fonte ig e salva igDays digitado', () => {
+  const api = apiFalsa();
+  const { form, radios, el } = formDOM({ dum: '2026-04-01', igHoje: '31+2' });
+  forms.datacao(null, el, api);
+  assert.equal(marcado(radios), 'ig');
+  assert.equal(form.dataset.escolhaManual, '1');
+  forms['paciente-salvar'](null, form, api);
+  const pac = api.estado.pac[0];
+  assert.equal(pac.datacao.escolhida, 'ig');
+  assert.equal(pac.igDays, 219);
+});
+
+test('escolha explícita de outro rádio depois da IG digitada prevalece', () => {
+  const api = apiFalsa();
+  const { form, radios, el } = formDOM({ dum: '2026-04-01', igHoje: '31+2' });
+  forms.datacao(null, el, api);
+  radios[0].checked = true;
+  forms['datacao-escolha'](null, { form }, api);
+  forms.datacao(null, { form, name: 'dum', value: '2026-04-01' }, api);
+  assert.equal(marcado(radios), 'dum');
+});
+
+test('paciente datada por IG além de 44+6: sem prefill e salvar com campo vazio mantém igDays', () => {
+  const api = apiFalsa();
+  api.atualizar((e) => ({ ...e, pac: [{ ...novaPaciente({ leito: '12', dxs: [{ dx: 'rpmo', mods: {} }] }), id: 'x1', igDays: 320, igRef: HOJE, datacao: { escolhida: 'ig', igDigitada: 320 } }] }));
+  const pac = api.estado.pac[0];
+  assert.doesNotMatch(htmlCadastro(pac, HOJE), /name="igHoje"[^>]*value="[^"]+"/);
+  const { form } = formDOM({ igHoje: '' });
+  form.dataset.id = 'x1';
+  forms['paciente-salvar'](null, form, api);
+  assert.equal(api.estado.pac[0].igDays, 320);
 });

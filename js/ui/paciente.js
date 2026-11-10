@@ -78,9 +78,9 @@ export function htmlMedForm(pac, med, hoje) {
     ${campoLivre({ nome: 'texto', rotulo: 'Medicação *', valor: m.texto ?? '', max: LIMITE_MED })}
     <div class="linha2">
       <label class="campo">Início<input type="date" name="inicio" value="${esc(m.inicio || hoje)}"></label>
-      <label class="campo">Dias previstos (opcional)<input type="number" name="previstos" inputmode="numeric" min="1" max="365" value="${esc(m.previstos ?? '')}"></label>
+      <label class="campo previstos-campo"${m.contar === false ? ' hidden' : ''}>Dias previstos (opcional)<input type="number" name="previstos" inputmode="numeric" min="1" max="365" value="${esc(m.previstos ?? '')}"></label>
     </div>
-    <label class="chip"><input type="checkbox" name="contar"${m.contar === false ? '' : ' checked'}> Contar dias</label>
+    <label class="chip"><input type="checkbox" name="contar"${m.contar === false ? '' : ' checked'} data-input="med-contar"> Contar dias</label>
     <div class="acoes-form">
       <button type="button" class="sec" data-act="fechar-folha">Cancelar</button>
       <button type="submit" class="primario">Salvar</button>
@@ -303,6 +303,10 @@ export function lerMedForm(el, hoje) {
 const copiaComMeds = (p) => ({ ...p, meds: (p.meds ?? []).map((m) => ({ ...m })) });
 
 export const acoes = {
+  'med-contar': (ev, el) => {
+    el.form.querySelector('.previstos-campo').hidden = !el.checked;
+    el.form.querySelector('input[name="previstos"]').disabled = !el.checked;
+  },
   ...acoesCenso,
   'paciente-ir': (ev, el) => {
     const trilho = el.closest('.paciente')?.querySelector('.v-trilho');

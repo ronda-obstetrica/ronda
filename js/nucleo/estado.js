@@ -95,10 +95,11 @@ function migrarPaciente(p) {
     meds: Array.isArray(resto.meds) ? resto.meds.map(normalizarMed).filter(Boolean) : [],
     prog: typeof resto.prog === 'string' ? resto.prog : '',
     // Séries de regra já dispensadas/removidas antes não voltam como sugestão.
-    sugDispensadas: [...new Set([
-      ...(Array.isArray(resto.sugDispensadas) ? resto.sugDispensadas : []),
-      ...(Array.isArray(resto.dispensadas) ? resto.dispensadas : []).filter((d) => typeof d === 'string').map((d) => `regra:${d}`),
-    ])],
+    // Só migra quando sugDispensadas ainda não existe: `dispensadas` segue valendo para os alertas
+    // (geração por IG), então não pode ser esvaziada; assim uma sugestão restaurada não volta.
+    sugDispensadas: Array.isArray(resto.sugDispensadas)
+      ? resto.sugDispensadas
+      : [...new Set((Array.isArray(resto.dispensadas) ? resto.dispensadas : []).filter((d) => typeof d === 'string').map((d) => `regra:${d}`))],
   };
 }
 
