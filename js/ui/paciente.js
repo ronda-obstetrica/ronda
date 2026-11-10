@@ -51,8 +51,8 @@ function htmlCabecalho(pac, r) {
 
 function htmlMudou(frases) {
   if (!frases?.length) return '';
-  return `<section class="bloco mudou"><h3>Mudou desde o último plantão</h3>
-    <ul class="mudou-lista">${frases.map((f) => `<li>${esc(f)}</li>`).join('')}</ul></section>`;
+  return `<details class="bloco mudou" data-k="mudou" open><summary>Mudou desde o último plantão <span class="contagem">${frases.length}</span></summary>
+    <ul class="mudou-lista">${frases.map((f) => `<li>${esc(f)}</li>`).join('')}</ul></details>`;
 }
 
 // ---------- Medicações ----------
@@ -165,10 +165,10 @@ function htmlControlesPaciente(pac, hoje, ctx) {
     </form>`;
   }).join('');
   const dicaPa = medidas.some((m) => m.id === 'pa') ? `<p class="nota" id="v-dica-pa-${esc(pac.id)}">PA no formato 150x95.</p>` : '';
-  return `<section class="bloco"><h3>Controles de hoje</h3>
+  return `<details class="bloco" data-k="controles" open><summary>Controles de hoje</summary>
     ${htmlRegistrosHoje(pac, hoje, ctx)}
     <div class="v-controles">${linhas}</div>${dicaPa}
-  </section>`;
+  </details>`;
 }
 
 function htmlTratamentos(pac, agora) {
@@ -194,10 +194,12 @@ export function htmlLeitoPaciente(pac, { estado, hoje, ctx, agora, frases, n, to
       ${htmlTratamentos(pac, agora)}
       ${htmlControlesPaciente(pac, hoje, ctx)}
       ${r.obs ? `<p class="obs"><b>Obs.:</b> ${esc(r.obs)}</p>` : ''}
-      <footer class="cartao-rodape">
-        ${btn('editar', { id: pac.id }, 'Editar cadastro', ' class="sec"')}
-        ${btn('alta', { id: pac.id }, 'Alta/parto', ' class="sec perigo"')}
-      </footer>
+      <details class="bloco cadastro" data-k="cadastro"><summary>Cadastro e alta</summary>
+        <footer class="cartao-rodape">
+          ${btn('editar', { id: pac.id }, 'Editar cadastro', ' class="sec"')}
+          ${btn('alta', { id: pac.id }, 'Alta/parto', ' class="sec perigo"')}
+        </footer>
+      </details>
     </div>
   </section>`;
 }
@@ -253,12 +255,22 @@ export function render(raiz, dados) {
   const pacs = ordenarPacientes(dados.estado.pac);
   const i = pacs.length ? indiceAtual(pacs) : 0;
   if (pacs.length) { atualIndice = i; atualId = pacs[i].id; }
+  // Guarda rolagem vertical e seções abertas/fechadas da paciente em vista para o redesenho não pular.
+  const antes = raiz.querySelector(`.v-leito-tela[data-id="${CSS.escape(String(atualId))}"]`);
+  const y = antes ? window.scrollY : null;
+  const abertos = {};
+  if (antes) for (const d of antes.querySelectorAll('details[data-k]')) abertos[d.dataset.k] = d.open;
   raiz.innerHTML = htmlPaciente(dados, { id: atualId });
+  if (antes) {
+    const nova = raiz.querySelector(`.v-leito-tela[data-id="${CSS.escape(String(atualId))}"]`);
+    for (const d of nova?.querySelectorAll('details[data-k]') ?? []) if (d.dataset.k in abertos) d.open = abertos[d.dataset.k];
+  }
   const trilho = raiz.querySelector('.v-trilho');
   if (!trilho) return;
   // Volta ao leito em vista sem animação (depois de uma ação o HTML é trocado inteiro).
   const alvo = trilho.children[i];
   if (alvo) trilho.scrollLeft = alvo.offsetLeft;
+  if (y != null) window.scrollTo(0, y);
   let pendente = false;
   trilho.addEventListener('scroll', () => {
     if (pendente) return;

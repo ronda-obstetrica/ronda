@@ -4,7 +4,7 @@
   --surface: #ffffff;
   --text: #1c1f24;
   --muted: #59606c;
-  --line: #d8d3c9;
+  --line: #e0dcd3;
   --accent: #1d5b85;
   --accent-fg: #ffffff;
   --red: #b42318;
@@ -15,10 +15,10 @@
   --gray-bg: #eceef1;
   --ok: #2b7346;
   --focus: #1d5b85;
-  --radius: 12px;
+  --radius: 10px;
   --fonte: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --nav-h: 60px;
+  --nav-h: 52px;
   color-scheme: light;
 }
 
@@ -70,7 +70,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 16px/1.45 var(--fonte);
+  font: 14px/1.4 var(--fonte);
   padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
   overflow-wrap: anywhere;
 }
@@ -85,8 +85,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 button {
   min-height: 44px;
   min-width: 44px;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 4px 12px;
+  border-radius: 8px;
   border: 1px solid var(--line);
   background: var(--surface);
   cursor: pointer;
@@ -102,15 +102,16 @@ input, select, textarea {
   width: 100%;
   min-width: 0;
   min-height: 44px;
-  padding: 8px 10px;
+  padding: 6px 10px;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 8px;
   background: var(--surface);
+  font-size: 16px;
 }
 textarea { resize: vertical; }
 
-.campo { display: flex; flex-direction: column; gap: 4px; font-size: .9rem; color: var(--muted); min-width: 0; }
-.campo input, .campo select, .campo textarea { color: var(--text); font-size: 1rem; }
+.campo { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--muted); min-width: 0; }
+.campo input, .campo select, .campo textarea { color: var(--text); font-size: 16px; }
 .campo-rodape { display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; }
 .aviso-lgpd { color: var(--amber); }
 .contador { font-family: var(--mono); white-space: nowrap; }
@@ -122,21 +123,21 @@ legend { padding: 0 6px; font-weight: 600; }
   display: inline-flex; align-items: center; gap: 6px;
   min-height: 44px; padding: 0 12px;
   border: 1px solid var(--line); border-radius: 999px;
-  color: var(--text); font-size: .95rem; cursor: pointer;
+  color: var(--text); font-size: 13px; cursor: pointer;
 }
 .chip input { width: 20px; min-height: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
 
 /* ---------- Topo e abas ---------- */
 .topo {
   display: flex; align-items: center; gap: 10px;
-  padding: 8px 16px; padding-top: max(8px, env(safe-area-inset-top));
+  padding: 4px 12px; padding-top: max(4px, env(safe-area-inset-top));
   border-bottom: 1px solid var(--line); background: var(--surface);
 }
-.marca { font-weight: 700; letter-spacing: .01em; }
-.data-hoje { color: var(--muted); font-family: var(--mono); font-size: .85rem; flex: 1; }
-.tema { font-size: .8rem; padding: 4px 10px; }
+.marca { font-weight: 700; font-size: 15px; letter-spacing: .01em; }
+.data-hoje { color: var(--muted); font-family: var(--mono); font-size: 12px; flex: 1; }
+.tema { font-size: 11px; padding: 2px 8px; }
 
-.tela { max-width: 760px; margin: 0 auto; padding: 12px 16px; display: grid; gap: 12px; }
+.tela { max-width: 760px; margin: 0 auto; padding: 10px 12px; display: grid; gap: 10px; }
 .tela:focus { outline: none; }
 
 .abas {
@@ -148,15 +149,15 @@ legend { padding: 0 6px; font-weight: 600; }
 .abas button {
   min-height: var(--nav-h); min-width: 0; padding: 4px 2px;
   border: 0; border-radius: 0; background: transparent;
-  font-size: clamp(10px, 2.9vw, 13px); color: var(--muted);
+  font-size: clamp(10px, 2.9vw, 12px); color: var(--muted);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .abas button[aria-current="page"] { color: var(--accent); font-weight: 700; box-shadow: inset 0 3px 0 var(--accent); }
 
 .barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.titulo-aba { font-size: 1.35rem; }
-.contagem { font-size: .85rem; font-weight: 400; color: var(--muted); margin-left: 6px; }
-.nota { font-size: .85rem; color: var(--muted); }
+.titulo-aba { font-size: 18px; }
+.contagem { font-size: 12px; font-weight: 400; color: var(--muted); margin-left: 6px; }
+.nota { font-size: 12px; color: var(--muted); }
 .vazio, .em-construcao { padding: 24px 4px; color: var(--muted); }
 .em-construcao .titulo-aba { color: var(--text); margin-bottom: 8px; }
 
@@ -165,10 +166,10 @@ legend { padding: 0 6px; font-weight: 600; }
 .banner-aviso { background: var(--amber-bg); color: var(--amber); border-color: var(--amber); }
 
 /* ---------- Cartão do leito ---------- */
-.cartoes { display: grid; gap: 14px; }
+.cartoes { display: grid; gap: 10px; }
 .cartao {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 12px; display: grid; gap: 10px; min-width: 0;
+  padding: 12px 12px 8px; display: grid; gap: 10px; min-width: 0;
 }
 .cartao-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
 .leito { font-size: 1.3rem; font-weight: 700; }
@@ -179,8 +180,8 @@ legend { padding: 0 6px; font-weight: 600; }
 
 .dxs { display: grid; gap: 6px; }
 .dx { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-.dx-nome { font-weight: 700; margin-right: 2px; }
-.mod { padding: 4px 12px; border-radius: 999px; font-size: .9rem; color: var(--muted); border-style: dashed; }
+.dx-nome { font-weight: 700; font-size: 15px; margin-right: 2px; }
+.mod { padding: 2px 10px; border-radius: 999px; font-size: 12px; color: var(--muted); border-style: dashed; }
 .mod.ligado { color: var(--accent-fg); background: var(--accent); border: 1px solid var(--accent); font-weight: 600; }
 .mod-escolha { border-style: solid; }
 
@@ -190,8 +191,8 @@ legend { padding: 0 6px; font-weight: 600; }
 }
 
 .bloco { display: grid; gap: 6px; }
-.bloco h3 { font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-.vazio-linha { font-size: .9rem; color: var(--muted); }
+.bloco h3, .bloco > summary { font-size: 12px; font-weight: 700; letter-spacing: .02em; color: var(--muted); }
+.vazio-linha { font-size: 12px; color: var(--muted); }
 ul.alertas, ul.pends, ul.registros { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 
 .alerta { border-left: 4px solid var(--gray); border-radius: 8px; padding: 8px 10px; background: var(--gray-bg); display: grid; gap: 4px; }
@@ -201,15 +202,15 @@ ul.alertas, ul.pends, ul.registros { list-style: none; margin: 0; padding: 0; di
 .alerta .prefixo { font-weight: 700; }
 .alerta.vermelho .prefixo { color: var(--red); }
 .alerta.amarelo .prefixo { color: var(--amber); }
-.fonte { font-size: .78rem; color: var(--muted); }
-.tag { font-size: .72rem; font-weight: 700; text-transform: uppercase; border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; }
+.fonte { font-size: 11px; color: var(--muted); }
+.tag { font-size: 10.5px; font-weight: 700; text-transform: uppercase; border: 1px solid currentColor; border-radius: 6px; padding: 0 5px; }
 .acoes-linha { display: flex; flex-wrap: wrap; gap: 6px; }
-.acoes-linha button { font-size: .9rem; padding: 6px 12px; }
+.acoes-linha button { font-size: 12px; padding: 2px 10px; }
 
-.registro { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: .95rem; padding-left: 8px; border-left: 4px solid transparent; }
+.registro { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-family: var(--mono); font-size: 13px; padding-left: 8px; border-left: 4px solid transparent; }
 .registro.vermelho { border-color: var(--red); }
 .registro.amarelo { border-color: var(--amber); }
-.registro .fora { font-family: var(--fonte); font-weight: 700; font-size: .85rem; display: block; }
+.registro .fora { font-family: var(--fonte); font-weight: 700; font-size: 12px; display: block; }
 .registro.vermelho .fora { color: var(--red); }
 .registro.amarelo .fora { color: var(--amber); }
 .controle { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) auto; gap: 6px; }
@@ -221,10 +222,10 @@ ul.alertas, ul.pends, ul.registros { list-style: none; margin: 0; padding: 0; di
 .pend.aguardando .prefixo { color: var(--amber); font-weight: 700; }
 .pend.feita { grid-template-columns: 44px minmax(0, 1fr) auto; color: var(--gray); }
 .check-feito { text-align: center; font-weight: 700; color: var(--ok); }
-.cat { font-size: .75rem; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; white-space: nowrap; }
-.prog { font-family: var(--mono); font-size: .85rem; font-weight: 600; }
+.cat { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; white-space: nowrap; }
+.prog { font-family: var(--mono); font-size: 12px; font-weight: 600; }
 
-.obs { font-size: .95rem; }
+.obs { font-size: 13px; }
 .cartao-rodape { display: flex; justify-content: space-between; gap: 8px; padding-top: 4px; border-top: 1px solid var(--line); }
 
 /* ---------- Folha inferior ---------- */
@@ -237,7 +238,7 @@ ul.alertas, ul.pends, ul.registros { list-style: none; margin: 0; padding: 0; di
   padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
 }
 .folha-corpo form, .folha-corpo { display: grid; gap: 12px; }
-.folha-corpo h2 { font-size: 1.15rem; }
+.folha-corpo h2 { font-size: 16px; }
 .acoes-form { display: flex; justify-content: flex-end; gap: 8px; }
 .linha { display: flex; gap: 6px; align-items: center; }
 .linha > select { flex: 1; }
@@ -267,7 +268,7 @@ ul.alertas, ul.pends, ul.registros { list-style: none; margin: 0; padding: 0; di
 }
 
 /* ---------- Task 14: Hoje, Plantão, Protocolos, Dados ---------- */
-button.mini { font-size: .85rem; padding: 4px 10px; }
+button.mini { font-size: 12px; padding: 2px 10px; }
 .bloco-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .banner-linha { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border: 1px solid var(--amber); }
 .banner-linha .mini { color: var(--amber); border-color: var(--amber); }
@@ -275,7 +276,7 @@ p.banner { padding: 10px 12px; border: 1px solid var(--amber); font-weight: 600;
 .pend-leito { font-family: var(--mono); white-space: nowrap; }
 .grupo-atrasadas h3 { color: var(--red); }
 .grupo-aguardando h3 { color: var(--amber); }
-.sec-tit { font-size: 1.05rem; }
+.sec-tit { font-size: 14px; }
 .acoes-plantao { gap: 8px; }
 textarea.previa { font-family: var(--mono); font-size: 16px; width: 100%; color: var(--text); }
 .editor { display: grid; gap: 6px; }
@@ -299,8 +300,8 @@ code { font-family: var(--mono); font-size: .85em; overflow-wrap: anywhere; }
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   background: var(--bg); padding: 4px 0;
 }
-.v-barra button { min-width: 56px; min-height: 48px; font-size: 1.5rem; line-height: 1; padding: 0 12px; }
-.v-indicador { font-family: var(--mono); font-weight: 700; font-size: 1.05rem; }
+.v-barra button { min-width: 48px; min-height: 44px; font-size: 1.3rem; line-height: 1; padding: 0 12px; }
+.v-indicador { font-family: var(--mono); font-weight: 600; font-size: 13px; color: var(--muted); }
 .v-trilho {
   position: relative;
   display: flex; align-items: flex-start;
@@ -311,26 +312,26 @@ code { font-family: var(--mono); font-size: .85em; overflow-wrap: anywhere; }
 .v-trilho::-webkit-scrollbar { display: none; }
 .v-trilho:focus { outline: none; }
 .v-leito-tela { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; scroll-snap-stop: always; padding: 0 2px; }
-.v-cartao { gap: 14px; }
+.v-cartao { gap: 12px; }
 .v-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; }
-.v-leito { font-size: 2rem; font-weight: 800; line-height: 1.1; }
-.v-ig { font-family: var(--mono); font-weight: 700; font-size: 1.4rem; }
-.v-ig.ig-nada { font-family: var(--fonte); font-weight: 400; font-size: 1rem; color: var(--muted); font-style: italic; }
-.v-dia { font-family: var(--mono); font-weight: 600; font-size: 1.2rem; color: var(--muted); }
+.v-leito { font-size: 22px; font-weight: 800; line-height: 1.1; }
+.v-ig { font-family: var(--mono); font-weight: 700; font-size: 17px; color: var(--accent); }
+.v-ig.ig-nada { font-family: var(--fonte); font-weight: 400; font-size: 13px; color: var(--muted); font-style: italic; }
+.v-dia { font-family: var(--mono); font-weight: 600; font-size: 14px; color: var(--muted); }
 .mudou { border-left: 4px solid var(--accent); border-radius: 8px; padding: 8px 10px; background: var(--gray-bg); }
 .mudou h3 { color: var(--accent); }
 .mudou-lista { margin: 0; padding-left: 18px; display: grid; gap: 2px; }
 .v-controles { display: grid; gap: 8px; }
 .v-controle { display: grid; grid-template-columns: minmax(84px, auto) minmax(0, 1fr) auto; align-items: center; gap: 8px; }
 .v-controle label { font-weight: 600; }
-.v-controle input { min-height: 52px; font-size: 1.3rem; font-family: var(--mono); }
-.v-controle button { min-height: 52px; }
+.v-controle input { min-height: 48px; font-size: 18px; font-family: var(--mono); }
+.v-controle button { min-height: 48px; }
 .v-trat { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
-.visita .mod { min-height: 48px; font-size: 1rem; padding: 6px 14px; }
-.visita .pend .check { min-height: 52px; min-width: 52px; font-size: 1.5rem; }
-.visita .pend { grid-template-columns: 52px minmax(0, 1fr); }
-.visita .pend.feita { grid-template-columns: 52px minmax(0, 1fr) auto; }
-.visita .acoes-linha button { min-height: 48px; font-size: 1rem; }
+.visita .mod { min-height: 44px; font-size: 13px; padding: 2px 12px; }
+.visita .pend .check { min-height: 48px; min-width: 48px; font-size: 1.3rem; }
+.visita .pend { grid-template-columns: 48px minmax(0, 1fr); }
+.visita .pend.feita { grid-template-columns: 48px minmax(0, 1fr) auto; }
+.visita .acoes-linha button { min-height: 44px; font-size: 12px; }
 
 /* ---------- Impressão (fichas por leito) ---------- */
 #impressao { display: none; }
@@ -370,27 +371,53 @@ code { font-family: var(--mono); font-size: .85em; overflow-wrap: anywhere; }
 .dx-novo-erro:empty { display: none; }
 
 /* ---------- Task 6: Censo em faixas, página da paciente, Programação (visual final na Task 7) ---------- */
-.faixas { display: grid; gap: 8px; }
+.faixas { display: grid; gap: 6px; }
 .faixa-leito {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 0; text-align: left; width: 100%;
-  min-height: 56px; padding: 10px 14px; font-size: 1rem; font-weight: 400;
+  min-height: 48px; padding: 6px 12px; font-size: 13px; font-weight: 400; line-height: 1.3;
   background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius);
 }
 .faixa-leito .sep { color: var(--muted); white-space: pre; }
-.fx-leito { font-family: var(--mono); font-size: 1.1rem; }
-.fx-ig { font-family: var(--mono); font-weight: 700; }
+.fx-leito { font-family: var(--mono); font-size: 16px; }
+.fx-ig { font-family: var(--mono); font-weight: 700; color: var(--accent); }
+.fx-ini, .fx-dx { color: var(--muted); }
 .fx-alertas.tem { color: var(--red); font-weight: 700; }
 .fx-pends.tem { color: var(--amber); font-weight: 700; }
-button.leito-link { min-height: 44px; padding: 4px 8px; background: none; border: 0; color: var(--accent); text-decoration: underline; font-weight: 700; font-size: 1rem; }
-button.link { min-height: 44px; background: none; border: 0; color: var(--accent); text-decoration: underline; padding: 4px 0; font-size: 1rem; }
+button.leito-link { min-height: 44px; padding: 4px 8px; background: none; border: 0; color: var(--accent); text-decoration: underline; font-weight: 700; font-size: 14px; }
+button.link { min-height: 44px; background: none; border: 0; color: var(--accent); text-decoration: underline; padding: 4px 0; font-size: 13px; }
 .prog-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.prog-linha { display: block; width: 100%; min-height: 56px; text-align: left; padding: 10px 14px; font-weight: 400; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); }
+.prog-linha { display: block; width: 100%; min-height: 48px; text-align: left; padding: 6px 12px; font-size: 13px; font-weight: 400; background: var(--surface); color: var(--text); border: 1px solid var(--line); border-radius: var(--radius); }
 .prog-txt { white-space: pre-wrap; overflow-wrap: anywhere; }
-.v-barra .v-lista { font-size: 1rem; min-width: 0; padding: 0 14px; }
+.v-barra .v-lista { font-size: 13px; min-width: 0; padding: 0 12px; }
 .v-info { color: var(--muted); font-weight: 600; }
-button.pend-nova { min-height: 48px; padding: 0 16px; }
+button.pend-nova { min-height: 44px; padding: 0 14px; font-size: 12px; }
 .meds, .sugs { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
-.med, .sug { display: grid; gap: 6px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.med, .sug { display: grid; gap: 4px; padding: 6px 10px; font-size: 13px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .med .acoes-linha button, .sug .acoes-linha button { min-height: 44px; }
 .med-ultimo { border-color: var(--amber); background: var(--amber-bg); font-weight: 600; }
 .med-terminou { border-color: var(--red); background: var(--red-bg); font-weight: 600; }
+
+/* ---------- Task 7: visual enxuto ---------- */
+.bloco > summary { list-style: none; cursor: pointer; min-height: 44px; display: flex; align-items: center; gap: 8px; }
+.bloco > summary::-webkit-details-marker { display: none; }
+.bloco > summary::before { content: "\203A"; display: inline-block; width: 10px; transition: transform .15s; }
+.bloco[open] > summary::before { transform: rotate(90deg); }
+.mudou > summary { color: var(--accent); }
+.cadastro > summary { min-height: 40px; }
+.cadastro .cartao-rodape { border-top: 0; padding-top: 0; }
+.cartao-rodape button { font-size: 12px; }
+.alergia { font-size: 13px; padding: 6px 10px; }
+.alerta { font-size: 13px; padding: 6px 10px; }
+.alerta.vermelho .prefixo { font-weight: 800; }
+.v-controle label { font-size: 12px; }
+.v-info { font-size: 12px; font-weight: 400; }
+.v-trat, .mudou-lista { font-size: 13px; }
+@media (prefers-reduced-motion: reduce) { .bloco > summary::before { transition: none; } }
+.bloco-cab > button.sec { border-color: transparent; background: transparent; color: var(--accent); font-weight: 600; font-size: 12px; padding: 0 6px; }
+.sug { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.sug .acoes-linha { flex-wrap: nowrap; }
+.sug .acoes-linha button { min-width: 44px; padding: 0 8px; }
+.mudou { padding: 0 10px 6px; }
+.mudou-lista { padding-left: 16px; }
+.barra .primario { font-size: 13px; padding: 0 12px; }
+.alerta .acoes-linha button { min-height: 44px; }
