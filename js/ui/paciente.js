@@ -257,13 +257,14 @@ export function render(raiz, dados) {
   const i = pacs.length ? indiceAtual(pacs) : 0;
   if (pacs.length) { atualIndice = i; atualId = pacs[i].id; }
   // Guarda rolagem vertical e seções abertas/fechadas da paciente em vista para o redesenho não pular.
-  const antes = raiz.querySelector(`.v-leito-tela[data-id="${CSS.escape(String(atualId))}"]`);
+  const achaTela = () => [...raiz.querySelectorAll('.v-leito-tela')].find((e) => e.dataset.id === String(atualId));
+  const antes = achaTela();
   const y = antes ? window.scrollY : null;
   const abertos = {};
   if (antes) for (const d of antes.querySelectorAll('details[data-k]')) abertos[d.dataset.k] = d.open;
   raiz.innerHTML = htmlPaciente(dados, { id: atualId });
   if (antes) {
-    const nova = raiz.querySelector(`.v-leito-tela[data-id="${CSS.escape(String(atualId))}"]`);
+    const nova = achaTela();
     for (const d of nova?.querySelectorAll('details[data-k]') ?? []) if (d.dataset.k in abertos) d.open = abertos[d.dataset.k];
   }
   const trilho = raiz.querySelector('.v-trilho');
