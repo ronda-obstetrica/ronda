@@ -24,7 +24,7 @@ test('censo do seed: 3 faixas em ordem natural, com IG, alertas vermelhos e pend
   assert.equal((html.match(/data-act="abrir-paciente" data-id="[^"]+"/g) || []).length, 3);
   assert.match(html, /31\+2 sem/);
   assert.match(html, /\d+ alertas? vermelhos?/);
-  assert.match(html, /\d+ pendências?/);
+  assert.doesNotMatch(html, /0 (alertas?|pendências?)/); // zero não aparece
   assert.doesNotMatch(html, /Alergia|Controles de hoje|data-act="mod"|undefined|NaN/); // detalhes ficam na página da paciente
 });
 

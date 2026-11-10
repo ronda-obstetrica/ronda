@@ -68,7 +68,8 @@ test('ordem: cabeçalho → mudou → diagnósticos → alertas → medicações
 test('seções da página: Medicações, Programação, Sugestões, Pendências e "+ Pendência" no topo da seção', () => {
   const estado = comSeed();
   const t = tela(html(estado, pacDo(estado, '04').id), pacDo(estado, '04').id);
-  for (const h of ['<h3>Medicações</h3>', '<h3>Programação</h3>', '<h3>Sugestões</h3>', '<h3>Pendências</h3>']) assert.ok(t.includes(h), h);
+  for (const h of ['<h3>Medicações</h3>', '<h3>Programação</h3>', '<h3>Pendências</h3>']) assert.ok(t.includes(h), h);
+  assert.match(t, /<details class="bloco" data-k="sugestoes"><summary>Sugestões \(\d+\)<\/summary>/);
   assert.match(t, /<h3>Pendências<\/h3><button type="button" data-act="pend-nova" data-id="[^"]+" class="primario pend-nova">\+ Pendência<\/button>/);
   assert.match(t, /data-act="med-nova"[^>]*>\+ Medicação/);
   assert.match(t, /data-act="alta"/);

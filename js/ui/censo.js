@@ -40,8 +40,8 @@ export function htmlFaixaLeito(pac, { hoje, ctx, agora = new Date() }) {
     ig,
     pac.iniciais ? `<span class="fx-ini">${esc(pac.iniciais)}</span>` : '',
     r.dxCurto.length ? `<span class="fx-dx">${esc(r.dxCurto.join(', '))}</span>` : '',
-    `<span class="fx-alertas${vermelhos ? ' tem' : ''}">${vermelhos} ${vermelhos === 1 ? 'alerta vermelho' : 'alertas vermelhos'}</span>`,
-    `<span class="fx-pends${pends ? ' tem' : ''}">${pends} ${pends === 1 ? 'pendência' : 'pendências'}</span>`,
+    vermelhos ? `<span class="fx-alertas tem">${vermelhos} ${vermelhos === 1 ? 'alerta vermelho' : 'alertas vermelhos'}</span>` : '',
+    pends ? `<span class="fx-pends tem">${pends} ${pends === 1 ? 'pendência' : 'pendências'}</span>` : '',
     pac.ex ? '<span class="etq-ex">exemplo</span>' : '',
   ].filter(Boolean);
   return `<button type="button" class="faixa-leito" data-act="abrir-paciente" data-id="${esc(pac.id)}">${partes.join('<span class="sep" aria-hidden="true"> · </span>')}</button>`;

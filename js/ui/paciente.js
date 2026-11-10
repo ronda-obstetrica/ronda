@@ -114,7 +114,7 @@ export function htmlProgForm(pac) {
 export function htmlSugestoes(pac, { estado, ctx, hoje }) {
   const lista = sugestoes(pac, estado, hoje, ctx);
   const nDisp = (pac.sugDispensadas ?? []).length;
-  if (!lista.length && !nDisp) return '';
+  if (!lista.length) return nDisp ? `<div class="bloco">${btn('sug-dispensadas', { id: pac.id }, `ver dispensadas (${nDisp})`, ' class="link"')}</div>` : '';
   const itens = lista.map((s) => {
     const d = { id: pac.id, chave: s.chave };
     return `<li class="sug"><span class="sug-txt">${esc(s.texto)} <span class="cat">${esc(s.cat)}</span></span>
@@ -122,10 +122,11 @@ export function htmlSugestoes(pac, { estado, ctx, hoje }) {
   }).join('');
   const todas = lista.length > 1 ? btn('sug-todas', { id: pac.id }, 'adicionar todas', ' class="sec"') : '';
   const disp = nDisp ? btn('sug-dispensadas', { id: pac.id }, `ver dispensadas (${nDisp})`, ' class="link"') : '';
-  return `<section class="bloco"><div class="bloco-cab"><h3>Sugestões</h3>${todas}</div>
-    ${itens ? `<ul class="sugs">${itens}</ul>` : '<p class="vazio-linha">Nenhuma sugestão no momento.</p>'}
+  return `<details class="bloco" data-k="sugestoes"><summary>Sugestões (${lista.length})</summary>
+    ${todas ? `<div class="bloco-cab">${todas}</div>` : ''}
+    <ul class="sugs">${itens}</ul>
     ${disp}
-  </section>`;
+  </details>`;
 }
 
 // Rótulo legível de uma chave dispensada: regra pela mensagem, protocolo pelo diagnóstico + texto normalizado.
