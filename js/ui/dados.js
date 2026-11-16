@@ -3,7 +3,7 @@ import { esc, ddmm } from './util.js';
 import { compartilharArquivo } from './compartilhar.js';
 import { exportarJSON, importarJSON, apagarExemplos, novoEstado } from '../nucleo/estado.js';
 import { contexto } from '../nucleo/contexto.js';
-import { definirDxCustom, obterDxCustom } from '../nucleo/diagnosticos.js';
+import { definirDxCustom, obterDxCustom, obterDxOcultos } from '../nucleo/diagnosticos.js';
 import { htmlCenso } from './censo.js';
 import { htmlHoje } from './hoje.js';
 
@@ -51,6 +51,7 @@ export function render(raiz, dados) {
 export function ensaiarRestauracao(texto, hoje) {
   const novo = importarJSON(texto);
   const registro = obterDxCustom();
+  const ocultos = obterDxOcultos();
   try {
     const c = contexto(novo);
     const pronto = novo;
@@ -60,7 +61,7 @@ export function ensaiarRestauracao(texto, hoje) {
     console.error(e);
     throw new Error('Backup inválido');
   } finally {
-    definirDxCustom(registro);
+    definirDxCustom(registro, ocultos);
   }
   return novo;
 }

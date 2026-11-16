@@ -9,7 +9,7 @@ import { resumoPaciente } from '../relatorios/comum.js';
 import { ordenarPacientes, cortar, normalizarPrevistos, LIMITE_MED, LIMITE_PROG } from '../nucleo/estado.js';
 import { progressoTratamento } from '../nucleo/pendencias.js';
 import { mudancasDesde, baseComparacao, instantaneo } from '../nucleo/mudancas.js';
-import { novaMed, diaMed, rotuloMed, adicionarMed, editarMed, removerMed } from '../nucleo/medicacoes.js';
+import { novaMed, diaMed, rotuloMed, rotuloUsada, adicionarMed, editarMed, removerMed, suspenderMed, retomarMed } from '../nucleo/medicacoes.js';
 import { sugestoes, aceitarSugestao, aceitarTodas, dispensarSugestao, restaurarSugestao } from '../nucleo/sugestoes.js';
 import { dxDef } from '../nucleo/diagnosticos.js';
 
@@ -58,16 +58,24 @@ function htmlMudou(frases) {
 // ---------- Medicações ----------
 
 export function htmlMedicacoes(pac, hoje) {
-  const itens = (pac.meds ?? []).map((m) => {
+  const todas = pac.meds ?? [];
+  const itens = todas.filter((m) => !m.fim).map((m) => {
     const sit = diaMed(m, hoje)?.situacao;
     const cls = sit === 'ultimo' ? ' med-ultimo' : sit === 'terminou' ? ' med-terminou' : '';
     const d = { id: pac.id, med: m.id };
     return `<li class="med${cls}"><span class="med-txt">${esc(rotuloMed(m, hoje))}</span>
-      <span class="acoes-linha">${btn('med-editar', d, 'Editar', ' class="sec"')}${btn('med-remover', d, 'Remover', ` class="sec perigo" aria-label="Remover ${esc(m.texto)}"`)}</span></li>`;
+      <span class="acoes-linha">${btn('med-editar', d, 'Editar', ' class="sec"')}${btn('med-suspender', d, 'Suspender', ' class="sec"')}${btn('med-remover', d, 'Remover', ` class="sec perigo" aria-label="Remover ${esc(m.texto)}"`)}</span></li>`;
   }).join('');
+  const usadas = todas.filter((m) => m.fim).map((m) => {
+    const d = { id: pac.id, med: m.id };
+    return `<li class="med"><span class="med-txt">${esc(rotuloUsada(m))}</span>
+      <span class="acoes-linha">${btn('med-editar', d, 'Editar', ' class="sec"')}${btn('med-retomar', d, 'Retomar', ' class="sec"')}${btn('med-remover', d, 'Remover', ` class="sec perigo" aria-label="Remover ${esc(m.texto)}"`)}</span></li>`;
+  }).join('');
+  const blocoUsadas = usadas
+    ? `<details class="bloco" data-k="meds-usadas"><summary>Medicações já utilizadas <span class="contagem">${todas.filter((m) => m.fim).length}</span></summary><ul class="meds">${usadas}</ul></details>` : '';
   return `<section class="bloco"><div class="bloco-cab"><h3>Medicações</h3>${btn('med-nova', { id: pac.id }, '+ Medicação', ' class="sec"')}</div>
     ${itens ? `<ul class="meds">${itens}</ul>` : '<p class="vazio-linha">Nenhuma medicação em curso.</p>'}
-  </section>`;
+  </section>${blocoUsadas}`;
 }
 
 export function htmlMedForm(pac, med, hoje) {
@@ -81,6 +89,7 @@ export function htmlMedForm(pac, med, hoje) {
       <label class="campo previstos-campo"${m.contar === false ? ' hidden' : ''}>Dias previstos (opcional)<input type="number" name="previstos" inputmode="numeric" min="1" max="365" value="${esc(m.previstos ?? '')}"></label>
     </div>
     <label class="chip"><input type="checkbox" name="contar"${m.contar === false ? '' : ' checked'} data-input="med-contar"> Contar dias</label>
+    <label class="campo">Suspensa em (opcional — preencha para registrar como já utilizada)<input type="date" name="fim" value="${esc(m.fim ?? '')}"></label>
     <div class="acoes-form">
       <button type="button" class="sec" data-act="fechar-folha">Cancelar</button>
       <button type="submit" class="primario">Salvar</button>
@@ -296,7 +305,10 @@ export function lerMedForm(el, hoje) {
   const prevTxt = String(el.previstos.value ?? '').trim();
   const previstos = prevTxt ? normalizarPrevistos(prevTxt) : null;
   if (prevTxt && previstos === null) return { erro: 'Dias previstos: use um número inteiro de 1 a 365.' };
-  return { campos: { texto, inicio, previstos, contar: Boolean(el.contar.checked) } };
+  const fim = String(el.fim?.value ?? '').trim();
+  if (fim && !RE_DATA.test(fim)) return { erro: 'Data de suspensão inválida.' };
+  if (fim && fim < inicio) return { erro: 'A suspensão não pode ser antes do início.' };
+  return { campos: { texto, inicio, previstos, contar: Boolean(el.contar.checked), ...(el.fim ? { fim } : {}) } };
 }
 
 // adicionarMed/editarMed/removerMed mutam a paciente: trabalham numa cópia, nunca no estado em uso.
@@ -334,6 +346,12 @@ export const acoes = {
     if (!ok) return;
     api.fecharFolha();
     api.avisar(medId ? 'Medicação atualizada.' : `Medicação adicionada ao leito ${pac.leito}.`);
+  }),
+  'med-suspender': comPac((pac, el, api) => {
+    if (api.atualizar(mudarPac(pac.id, (p) => suspenderMed(copiaComMeds(p), el.dataset.med, api.hoje)))) api.avisar('Medicação movida para as já utilizadas.');
+  }),
+  'med-retomar': comPac((pac, el, api) => {
+    if (api.atualizar(mudarPac(pac.id, (p) => retomarMed(copiaComMeds(p), el.dataset.med)))) api.avisar('Medicação voltou para as em curso.');
   }),
   'med-remover': comPac((pac, el, api) => {
     if (typeof globalThis.confirm === 'function' && !globalThis.confirm('Remover esta medicação?')) return;

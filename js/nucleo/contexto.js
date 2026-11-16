@@ -5,7 +5,7 @@ import { mesclarPorId } from './textoregras.js';
 import { definirDxCustom } from './diagnosticos.js';
 
 export function contexto(estado) {
-  definirDxCustom(estado.dxCustom ?? []);
+  definirDxCustom(estado.dxCustom ?? [], estado.dxOcultos ?? []);
   const { itens, desligar, erros } = parseRegras(estado.regrasServico ?? '');
   const fx = parseFaixas(estado.faixasServico ?? '');
   return {

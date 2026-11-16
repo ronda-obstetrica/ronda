@@ -15,6 +15,7 @@ export function novoEstado() {
   return {
     v: 3,
     dxCustom: [],
+    dxOcultos: [],
     prot: { ...PROT_PADRAO },
     regrasServico: '',
     faixasServico: '',
@@ -38,12 +39,14 @@ export function normalizarMed(m) {
   if (!m || typeof m !== 'object' || Array.isArray(m)) return null;
   const texto = cortar(m.texto, LIMITE_MED);
   if (!texto) return null;
+  const fim = typeof m.fim === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(m.fim) ? m.fim : null;
   return {
     id: typeof m.id === 'string' && m.id ? m.id : novoId(),
     texto,
     inicio: typeof m.inicio === 'string' ? m.inicio : null,
     previstos: normalizarPrevistos(m.previstos),
     contar: m.contar !== false,
+    ...(fim ? { fim } : {}),
   };
 }
 
@@ -109,6 +112,7 @@ export function migrar(obj) {
     ...obj,
     v: 3,
     dxCustom: Array.isArray(obj.dxCustom) ? obj.dxCustom : [],
+    dxOcultos: Array.isArray(obj.dxOcultos) ? obj.dxOcultos.filter((x) => typeof x === 'string') : [],
     pac: (obj.pac ?? []).map(migrarPaciente),
   };
 }

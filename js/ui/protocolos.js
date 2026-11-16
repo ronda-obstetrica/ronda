@@ -2,7 +2,7 @@
 // Salvar grava só o texto; linhas com erro são ignoradas na avaliação e continuam visíveis aqui.
 import { esc } from './util.js';
 import { copiarTexto } from './compartilhar.js';
-import { dxDef, listaDx, validarNovoDx, renomearDx, excluirDx } from '../nucleo/diagnosticos.js';
+import { dxDef, listaDx, validarNovoDx, renomearDx, excluirDx, ocultarDx, restaurarDxBase, obterDxOcultos } from '../nucleo/diagnosticos.js';
 import { parseProtocolo, PROT_PADRAO } from '../nucleo/pendencias.js';
 import { parseRegras, REGRAS_GLOBAIS_TEXTO } from '../nucleo/regras.js';
 import { parseFaixas, FAIXAS_GLOBAIS_TEXTO } from '../nucleo/faixas.js';
@@ -73,8 +73,8 @@ function htmlProtDx(estado) {
     const extra = def.custom
       ? `<button type="button" class="sec" data-act="dx-renomear" data-dx="${esc(dx)}">Renomear</button>
          <button type="button" class="sec perigo" data-act="dx-excluir" data-dx="${esc(dx)}">Excluir</button>`
-      : PROT_PADRAO[dx] !== undefined
-        ? `<button type="button" class="sec" data-act="prot-modelo" data-dx="${esc(dx)}">Restaurar modelo</button>` : '';
+      : `${PROT_PADRAO[dx] !== undefined ? `<button type="button" class="sec" data-act="prot-modelo" data-dx="${esc(dx)}">Restaurar modelo</button>` : ''}
+         <button type="button" class="sec perigo" data-act="dx-ocultar" data-dx="${esc(dx)}">× Excluir da lista</button>`;
     if (sujo) abertos.add(dx);
     return `<details class="prot-dx"${abertos.has(dx) ? ' open' : ''}>
       <summary data-act="prot-secao" data-dx="${esc(dx)}"><b>${esc(def.nome)}</b> <span class="nota">${resumo}</span>${sujo ? ' <span class="nao-salvo">● não salvo</span>' : ''}</summary>
@@ -85,12 +85,15 @@ function htmlProtDx(estado) {
 
 export function htmlProtocolos({ estado }) {
   const verGlobais = (tipo) => `<button type="button" class="sec" data-act="ver-globais" data-tipo="${tipo}">Ver ${tipo === 'regras' ? 'regras' : 'faixas'} globais</button>`;
+  const nOcultos = obterDxOcultos().length;
+  const restaurarBase = nOcultos
+    ? `<p class="nota">${nOcultos} ${nOcultos === 1 ? 'diagnóstico padrão fora da lista' : 'diagnósticos padrão fora da lista'}. <button type="button" class="sec" data-act="dx-restaurar-base">Restaurar</button></p>` : '';
   return `<h1 class="titulo-aba">Protocolos</h1>
     <p class="banner banner-aviso">${esc(AVISO_PROTOCOLOS)}</p>
     <section class="bloco">
       <h2 class="sec-tit">Protocolos por diagnóstico</h2>
       <p class="nota">Uma linha por item: <code>texto | categoria | dias até o 1º prazo | repetir a cada N dias (0 = não) | duração opcional (7d, 24h, 2doses@1)</code>. Linhas com # são comentários. O protocolo entra nas pendências quando o diagnóstico é cadastrado no leito.</p>
-      ${htmlProtDx(estado)}
+      ${restaurarBase}${htmlProtDx(estado)}
     </section>
     <section class="bloco">
       <h2 class="sec-tit">Regras de alerta do serviço</h2>
@@ -161,10 +164,9 @@ export const acoes = {
     const id = el.dataset.dx;
     const atual = api.estado.dxCustom?.find((d) => d.id === id);
     if (!atual) return;
-    const nome = globalThis.prompt('Nome por extenso (até 40 caracteres):', atual.nome);
+    const nome = globalThis.prompt('Nome do diagnóstico (até 40 caracteres):', atual.nome);
     if (nome === null) return;
-    const sigla = globalThis.prompt('Sigla (até 6 caracteres):', atual.sigla);
-    if (sigla === null) return;
+    const sigla = '';
     const erro = validarNovoDx(api.estado, { nome, sigla }, id);
     if (erro) { api.avisar(erro); return; }
     abertos.add(id);
@@ -178,6 +180,18 @@ export const acoes = {
     abertos.delete(id);
     rascunhos.delete(chave('prot', id));
     if (api.atualizar((estado) => excluirDx(estado, id))) api.avisar('Diagnóstico excluído.');
+  },
+  // Diagnóstico padrão: sai da lista (o protocolo fica guardado) e pode ser restaurado.
+  'dx-ocultar': (ev, el, api) => {
+    const id = el.dataset.dx;
+    const emUso = api.estado.pac.filter((p) => p.dxs.some((d) => d.dx === id)).length;
+    if (emUso) { api.avisar(`Em uso em ${emUso} leito(s). Remova o diagnóstico dos leitos antes de excluir.`); return; }
+    if (!globalThis.confirm(`Tirar "${dxDef(id)?.nome ?? id}" da lista? O protocolo fica guardado e você pode restaurar depois.`)) return;
+    abertos.delete(id);
+    if (api.atualizar((estado) => ocultarDx(estado, id))) api.avisar('Diagnóstico tirado da lista.');
+  },
+  'dx-restaurar-base': (ev, el, api) => {
+    if (api.atualizar((estado) => restaurarDxBase(estado))) api.avisar('Diagnósticos padrão restaurados.');
   },
   'prot-modelo': (ev, el, api) => {
     const dx = el.dataset.dx;

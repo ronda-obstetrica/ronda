@@ -85,9 +85,12 @@ function htmlDxBloco(item) {
   const ops = listaDx().map(([id, d]) => `<option value="${esc(id)}"${item?.dx === id ? ' selected' : ''}>${esc(d.nome)}</option>`).join('');
   // Dx já gravado mas removido do registro: mantém a opção para não perder a escolha ao reabrir.
   const orfao = item?.dx && !dxDef(item.dx) ? `<option value="${esc(item.dx)}" selected>Diagnóstico removido</option>` : '';
+  // Diagnóstico padrão tirado da lista, mas ainda usado neste leito: continua selecionável.
+  const naLista = new Set(listaDx().map(([id]) => id));
+  const oculto = item?.dx && dxDef(item.dx) && !naLista.has(item.dx) ? `<option value="${esc(item.dx)}" selected>${esc(dxDef(item.dx).nome)}</option>` : '';
   return `<div class="dx-bloco">
     <div class="linha">
-      <select data-campo="dx" data-input="dx-form" aria-label="Diagnóstico"><option value="">— diagnóstico —</option>${ops}${orfao}</select>
+      <select data-campo="dx" data-input="dx-form" aria-label="Diagnóstico"><option value="">— diagnóstico —</option>${ops}${orfao}${oculto}</select>
       <button type="button" class="icone" data-act="dx-remover" aria-label="Remover diagnóstico">×</button>
     </div>
     <div class="dx-mods">${htmlModsForm(item)}</div>
@@ -104,7 +107,7 @@ function lerDx(bloco) {
 }
 
 function criarDxForm(mini, api) {
-  const dados = { nome: mini.querySelector('[data-dx-nome]').value, sigla: mini.querySelector('[data-dx-sigla]').value };
+  const dados = { nome: mini.querySelector('[data-dx-nome]').value, sigla: '' };
   const erro = validarNovoDx(api.estado, dados);
   const alvo = mini.querySelector('.dx-novo-erro');
   alvo.textContent = erro ?? '';
@@ -114,7 +117,7 @@ function criarDxForm(mini, api) {
   const form = mini.closest('form');
   const opcao = (sel) => {
     const o = globalThis.document.createElement('option');
-    o.value = novo.id; o.textContent = novo.sigla;
+    o.value = novo.id; o.textContent = novo.sigla || novo.nome;
     sel.append(o);
   };
   const selects = [...form.querySelectorAll('select[data-campo="dx"]')];
@@ -128,8 +131,7 @@ function criarDxForm(mini, api) {
   livre.closest('.dx-bloco').querySelector('.dx-mods').innerHTML = '';
   mini.hidden = true;
   mini.querySelector('[data-dx-nome]').value = '';
-  mini.querySelector('[data-dx-sigla]').value = '';
-  api.avisar(`Diagnóstico ${novo.sigla} criado.`);
+  api.avisar(`Diagnóstico ${novo.sigla || novo.nome} criado.`);
 }
 
 // ---------- Cadastro ----------
@@ -153,8 +155,7 @@ export function htmlCadastro(pac, hoje) {
       <button type="button" class="sec" data-act="dx-add">+ diagnóstico</button>
       <button type="button" class="sec" data-act="dx-novo">+ Novo diagnóstico</button>
       <div class="dx-novo" hidden>
-        <label class="campo">Nome por extenso<input form="sem-form" data-dx-nome maxlength="40" autocomplete="off"></label>
-        <label class="campo">Sigla<input form="sem-form" data-dx-sigla maxlength="6" autocomplete="off"></label>
+        <label class="campo">Nome do diagnóstico<input form="sem-form" data-dx-nome maxlength="40" autocomplete="off"></label>
         <p class="erro dx-novo-erro" role="alert" aria-live="polite"></p>
         <div class="acoes-form">
           <button type="button" class="sec" data-act="dx-novo-cancelar">Cancelar</button>

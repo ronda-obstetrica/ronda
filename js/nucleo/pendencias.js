@@ -75,6 +75,66 @@ export function lerDuracao(txt) {
   return parseDuracao(String(txt ?? '').trim());
 }
 
+// Repetição em dias a partir de um texto: "2", "48h", "a cada 3 dias", "semanal"... Devolve null se não entender.
+export function lerRepeticao(txt) {
+  const s = String(txt ?? '').trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  if (!s) return null;
+  const pre = '(?:a\\s+cada\\s+|cada\\s+)?';
+  let n = null;
+  let m;
+  if (/^\d+$/.test(s)) n = Number(s);
+  else if ((m = new RegExp(`^${pre}(\\d+)\\s*(?:h|hr|hrs|horas?)$`).exec(s))) n = Math.max(1, Math.round(Number(m[1]) / 24));
+  else if ((m = new RegExp(`^${pre}(\\d+)\\s*(?:d|dias?)$`).exec(s))) n = Number(m[1]);
+  else if ((m = new RegExp(`^${pre}(\\d+)\\s*(?:sem|semanas?)$`).exec(s))) n = Number(m[1]) * 7;
+  else if (/^(diari[oa]s?|diariamente|todo dia|todos os dias)$/.test(s)) n = 1;
+  else if (/^(semanal|semanalmente|toda semana)$/.test(s)) n = 7;
+  else if (/^(quinzenal|quinzenalmente)$/.test(s)) n = 14;
+  else if (/^mensal$/.test(s)) n = 30;
+  return n !== null && n <= 365 ? n : null;
+}
+
+const ACRONIMOS = { usg: 'USG', ctg: 'CTG', pbf: 'PBF', ila: 'ILA', pa: 'PA', pcr: 'PCR', ldh: 'LDH', dhl: 'DHL', gbs: 'GBS', eas: 'EAS', tgo: 'TGO', tgp: 'TGP', bcf: 'BCF', rm: 'RM' };
+const RE_FRASE_REP = /(?:de\s+)?\d+\s*(?:em|\/)\s*\d+\s*(?:h|horas?|d|dias?)(?![a-zà-ÿ])|(?:a\s+cada|cada)\s+\d+\s*(?:h|hr|hrs|horas?|d|dias?|sem|semanas?)(?![a-zà-ÿ])|(?:semanal(?:mente)?|quinzenal(?:mente)?|mensal|di[aá]ri(?:amente|os|as|o|a)|todos\s+os\s+dias|todo\s+dia|toda\s+semana)(?![a-zà-ÿ])/i;
+
+function categoriaDoTexto(t) {
+  const s = t.toLowerCase();
+  if (/interconsulta|parecer/.test(s)) return 'Interconsulta';
+  if (/dose|medica|antibi[oó]tic|insulina|sulfato|corticoide|betametasona|dexametasona|nifedipin|metildopa/.test(s)) return 'Medicação';
+  if (/usg|ultrassom|doppler|ctg|cardiotoco|pbf|perfil|hemograma|exame|cultura|urina|eas|rotina|sorologia|glicemi|glic[eê]mic|[aá]cidos? biliares|transaminases|pcr|ldh|dhl|creatinina|plaquetas|laborat/.test(s)) return 'Exame';
+  if (/avaliar|aferir|sinais|checar|examinar|press[aã]o|\bpa\b/.test(s)) return 'Avaliação';
+  if (/definir|conduta|parto|resolu|planejar|decidir/.test(s)) return 'Conduta';
+  return 'Outro';
+}
+
+function diasDaFrase(frase) {
+  const m = /\d+\s*(?:em|\/)\s*(\d+)\s*(h|horas?|d|dias?)/i.exec(frase);
+  if (m) return /^h/i.test(m[2]) ? Math.max(1, Math.round(Number(m[1]) / 24)) : Number(m[1]);
+  return lerRepeticao(frase) ?? 0;
+}
+
+// Texto livre -> pendências com repetição. Ex.: "rotina infecciosa a cada 48h, USG semanal".
+// Separe várias por vírgula, ponto e vírgula, "+" ou nova linha. Entende "amanhã" e "depois de amanhã" no 1º prazo.
+export function interpretarPendencias(texto) {
+  return String(texto ?? '').split(/[\n;,+]+/).map((t) => t.trim()).filter(Boolean).map((bruto) => {
+    let t = bruto;
+    let rep = 0;
+    let dias = 0;
+    const m = RE_FRASE_REP.exec(t);
+    if (m) { rep = diasDaFrase(m[0]); t = t.replace(m[0], ' '); }
+    const rxDepois = /depois\s+de\s+amanh[ãa](?![a-zà-ÿ])/i;
+    const rxAmanha = /(^|\s)amanh[ãa](?![a-zà-ÿ])/i;
+    const rxHoje = /(^|\s)hoje(?![a-zà-ÿ])/i;
+    if (rxDepois.test(t)) { dias = 2; t = t.replace(rxDepois, ' '); }
+    else if (rxAmanha.test(t)) { dias = 1; t = t.replace(rxAmanha, ' '); }
+    else if (rxHoje.test(t)) t = t.replace(rxHoje, ' ');
+    t = t.replace(/\s+/g, ' ').replace(/^[\s\-–:.]+|[\s\-–:.]+$/g, '');
+    if (!t) t = 'Pendência';
+    t = t.replace(/[A-Za-zÀ-ÿ]+/g, (w) => ACRONIMOS[w.toLowerCase()] ?? w);
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    return { texto: t, cat: categoriaDoTexto(t), rep, dias };
+  });
+}
+
 export function parseProtocolo(texto) {
   const itens = [], erros = [];
   for (const { n, campos } of dividirLinhas(texto)) {
@@ -86,13 +146,14 @@ export function parseProtocolo(texto) {
     const cat = CATEGORIAS.find((c) => c.toLowerCase() === catTxt.toLowerCase());
     if (!cat) { erro(`categoria inexistente: "${catTxt}" (use ${CATEGORIAS.join(', ')})`); continue; }
     if (!RE_INT.test(diasTxt)) { erro(`dias inválido: "${diasTxt}" (use um número inteiro ≥ 0)`); continue; }
-    if (!RE_INT.test(repTxt)) { erro(`repetição inválida: "${repTxt}" (use um número inteiro ≥ 0)`); continue; }
+    const rep = lerRepeticao(repTxt);
+    if (rep === null) { erro(`repetição inválida: "${repTxt}" (use um número de dias, ex.: 2, ou 48h, semanal)`); continue; }
     let dur = null;
     if (durTxt !== '') {
       dur = parseDuracao(durTxt);
       if (!dur) { erro(`duração inválida: "${durTxt}" (use 7d, 24h ou 2doses@1)`); continue; }
     }
-    itens.push({ texto: txt, cat, dias: Number(diasTxt), rep: Number(repTxt), dur });
+    itens.push({ texto: txt, cat, dias: Number(diasTxt), rep, dur });
   }
   return { itens, erros };
 }

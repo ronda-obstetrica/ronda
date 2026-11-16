@@ -35,7 +35,7 @@ test('validarNovoDx', () => {
   assert.ok(validarNovoDx(e, { nome: 'Outra', sigla: 'pnf' }));
   assert.ok(validarNovoDx(novoEstado(), { nome: '', sigla: 'AB' }));
   assert.ok(validarNovoDx(novoEstado(), { nome: 'x'.repeat(41), sigla: 'AB' }));
-  assert.ok(validarNovoDx(novoEstado(), { nome: 'X', sigla: '' }));
+  assert.equal(validarNovoDx(novoEstado(), { nome: 'X', sigla: '' }), null); // sigla é opcional
 });
 
 test('rótulos e lista com dx criado', () => {

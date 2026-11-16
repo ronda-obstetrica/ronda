@@ -65,7 +65,7 @@ export function resumoPaciente(pac, hoje, ctx, agora = new Date()) {
     dxExtenso: pac.dxs.map(rotuloExtenso),
     alerg: pac.alerg ?? '',
     obs: pac.obs ?? '',
-    meds: (pac.meds ?? []).map(m => rotuloMed(m, hoje)),
+    meds: (pac.meds ?? []).filter(m => !m?.fim).map(m => rotuloMed(m, hoje)),
     prog: pac.prog ?? '',
     alertas: ordenarAlertas(avaliarAlertas(pac, hoje, ctx.regras)),
     hoje: cl.hoje,

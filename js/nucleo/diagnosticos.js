@@ -55,15 +55,20 @@ export const DIAGNOSTICOS = {
 const ROTULO_REMOVIDO = 'Diagnóstico removido';
 let custom = {};
 let bruto = [];
+// Diagnósticos padrão que a usuária tirou da lista (seguem valendo para quem já os tem num leito).
+let ocultos = new Set();
 
 export const obterDxCustom = () => bruto;
+export const obterDxOcultos = () => [...ocultos];
 
-export function definirDxCustom(lista) {
+export function definirDxCustom(lista, listaOcultos = []) {
   bruto = Array.isArray(lista) ? lista : [];
   custom = {};
+  ocultos = new Set((Array.isArray(listaOcultos) ? listaOcultos : []).filter((id) => typeof id === 'string' && Object.hasOwn(DIAGNOSTICOS, id)));
   for (const it of Array.isArray(lista) ? lista : []) {
     if (!it || typeof it.id !== 'string' || Object.hasOwn(DIAGNOSTICOS, it.id)) continue;
-    custom[it.id] = { nome: String(it.sigla ?? ''), extenso: String(it.nome ?? ''), mods: [], custom: true };
+    // Sem sigla, aparece o nome do diagnóstico.
+    custom[it.id] = { nome: String(it.sigla || it.nome || ''), extenso: String(it.nome ?? ''), mods: [], custom: true };
   }
 }
 
@@ -73,31 +78,33 @@ export function dxDef(id) {
   return Object.hasOwn(custom, id) ? custom[id] : null;
 }
 
-export const listaDx = () => [...Object.entries(DIAGNOSTICOS), ...Object.entries(custom)];
+export const listaDx = () => [...Object.entries(DIAGNOSTICOS).filter(([id]) => !ocultos.has(id)), ...Object.entries(custom)];
 
 const chaveSigla = (s) => String(s ?? '').trim().toLowerCase();
 
+// Só o nome é obrigatório; a sigla é opcional.
 export function validarNovoDx(estado, { nome, sigla }, ignorarId = null) {
   const n = String(nome ?? '').trim();
   const s = String(sigla ?? '').trim();
   if (!n || n.length > 40) return 'Informe o nome (até 40 caracteres).';
-  if (!s || s.length > 6) return 'Informe a sigla (até 6 caracteres).';
-  const k = chaveSigla(s);
-  const usada = Object.values(DIAGNOSTICOS).some((d) => chaveSigla(d.nome) === k)
-    || (estado?.dxCustom ?? []).some((d) => d.id !== ignorarId && chaveSigla(d.sigla) === k);
-  return usada ? 'Já existe um diagnóstico com essa sigla.' : null;
+  if (s.length > 6) return 'A sigla pode ter até 6 caracteres.';
+  const chaves = [chaveSigla(n), ...(s ? [chaveSigla(s)] : [])];
+  const bate = (d) => [d.nome, d.extenso, d.sigla].some((x) => x && chaves.includes(chaveSigla(x)));
+  const usada = Object.values(DIAGNOSTICOS).some(bate)
+    || (estado?.dxCustom ?? []).some((d) => d.id !== ignorarId && bate({ nome: d.nome, sigla: d.sigla }));
+  return usada ? 'Já existe um diagnóstico com esse nome ou sigla.' : null;
 }
 
 const slug = (s) => String(s).trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'dx';
 
 export function criarDx(estado, { nome, sigla }) {
-  const base = `u-${slug(sigla)}`;
+  const base = `u-${slug(sigla || nome)}`;
   const ocupados = new Set([...Object.keys(DIAGNOSTICOS), ...(estado.dxCustom ?? []).map((d) => d.id)]);
   let id = base;
   for (let i = 2; ocupados.has(id); i++) id = `${base}-${i}`;
   return {
     ...estado,
-    dxCustom: [...(estado.dxCustom ?? []), { id, nome: String(nome).trim(), sigla: String(sigla).trim() }],
+    dxCustom: [...(estado.dxCustom ?? []), { id, nome: String(nome).trim(), sigla: String(sigla ?? '').trim() }],
     prot: { ...estado.prot, [id]: '' },
   };
 }
@@ -105,7 +112,7 @@ export function criarDx(estado, { nome, sigla }) {
 export function renomearDx(estado, id, { nome, sigla }) {
   return {
     ...estado,
-    dxCustom: (estado.dxCustom ?? []).map((d) => (d.id === id ? { ...d, nome: String(nome).trim(), sigla: String(sigla).trim() } : d)),
+    dxCustom: (estado.dxCustom ?? []).map((d) => (d.id === id ? { ...d, nome: String(nome).trim(), sigla: String(sigla ?? '').trim() } : d)),
   };
 }
 
@@ -114,6 +121,17 @@ export function excluirDx(estado, id) {
   const { [id]: _, ...prot } = estado.prot ?? {};
   return { ...estado, dxCustom: (estado.dxCustom ?? []).filter((d) => d.id !== id), prot };
 }
+
+// Tira um diagnóstico padrão da lista. Não apaga o protocolo: dá para restaurar depois.
+// Devolve null se não for um diagnóstico padrão ou se algum leito ainda o usa.
+export function ocultarDx(estado, id) {
+  if (!Object.hasOwn(DIAGNOSTICOS, id)) return null;
+  if ((estado.pac ?? []).some((p) => (p.dxs ?? []).some((d) => d.dx === id))) return null;
+  const atual = estado.dxOcultos ?? [];
+  return atual.includes(id) ? estado : { ...estado, dxOcultos: [...atual, id] };
+}
+
+export const restaurarDxBase = (estado) => ({ ...estado, dxOcultos: [] });
 
 function visivel(mod, mods) {
   if (!mod.visivelSe) return true;

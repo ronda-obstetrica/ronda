@@ -101,7 +101,7 @@ const api = {
 };
 
 function render(est = estado, c = ctx) {
-  definirDxCustom(est?.dxCustom ?? []);
+  definirDxCustom(est?.dxCustom ?? [], est?.dxOcultos ?? []);
   for (const b of document.querySelectorAll('.abas [data-aba]')) {
     if (b.dataset.aba === (aba === 'paciente' ? 'censo' : aba)) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
   }
