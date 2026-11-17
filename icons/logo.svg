@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Ronda Obstétrica">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f08fb3"/>
+      <stop offset="1" stop-color="#c2527a"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="124" fill="url(#g)"/>
+  <circle cx="256" cy="256" r="152" fill="none" stroke="#fff" stroke-width="24" stroke-linecap="round" stroke-dasharray="800 155" transform="rotate(-50 256 256)"/>
+  <circle cx="256" cy="104" r="19" fill="#fff"/>
+  <path fill="#fff" d="M256 326C203 286 184 256 184 230C184 205 203 190 224 190C239 190 250 198 256 210C262 198 273 190 288 190C309 190 328 205 328 230C328 256 309 286 256 326Z"/>
+</svg>

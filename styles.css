@@ -1,67 +1,79 @@
-/* Ronda Obstétrica v2 — celular primeiro. Tokens em :root; escuro por preferência do sistema ou [data-theme]. */
+/* Ronda Obstétrica v2 — celular primeiro. Visual rosa suave. Tokens em :root; escuro por preferência do sistema ou [data-theme]. */
 :root {
-  --bg: #f4f2ee;
+  --bg: #fdf5f7;
   --surface: #ffffff;
-  --text: #1c1f24;
-  --muted: #59606c;
-  --line: #e0dcd3;
-  --accent: #1d5b85;
+  --text: #3b2a33;
+  --muted: #7d6470;
+  --line: #f1dde4;
+  --accent: #c2527a;
   --accent-fg: #ffffff;
-  --red: #b42318;
-  --red-bg: #fdecea;
+  --accent-soft: #fbe3eb;
+  --accent-texto: #a23a62;
+  --red: #b3304f;
+  --red-bg: #fde8ec;
   --amber: #8a5800;
-  --amber-bg: #fff3d4;
-  --gray: #646b76;
-  --gray-bg: #eceef1;
-  --ok: #2b7346;
-  --focus: #1d5b85;
-  --borda-campo: #b9b2a6;
-  --radius: 10px;
-  --fonte: "Public Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  --nav-h: 52px;
+  --amber-bg: #fff1dc;
+  --gray: #7d6470;
+  --gray-bg: #f7ecf0;
+  --ok: #2f7d5b;
+  --focus: #c2527a;
+  --borda-campo: #e3c5d0;
+  --radius: 18px;
+  --sombra: 0 2px 10px rgb(180 90 120 / .10);
+  --sombra-forte: 0 6px 20px rgb(180 90 120 / .18);
+  --fonte: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "Nunito", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --nav-h: 56px;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #121418;
-    --surface: #1b1e24;
-    --text: #e9e7e2;
-    --muted: #a3a9b4;
-    --line: #353a44;
-    --accent: #73b4e2;
-    --accent-fg: #0a1620;
-    --red: #ff8f85;
-    --red-bg: #3b1814;
-    --amber: #f3c453;
-    --amber-bg: #33280c;
-    --gray: #9ba2ac;
-    --gray-bg: #262a31;
-    --ok: #7cd19b;
-    --focus: #73b4e2;
-    --borda-campo: #5a6270;
+    --bg: #1c1217;
+    --surface: #2a1c24;
+    --text: #f6e8ee;
+    --muted: #bda0ae;
+    --line: #3d2b35;
+    --accent: #e87aa3;
+    --accent-fg: #2a0f1b;
+    --accent-soft: #41242f;
+    --accent-texto: #f3a6c1;
+    --red: #ff93a8;
+    --red-bg: #40181f;
+    --amber: #f3c27d;
+    --amber-bg: #38270f;
+    --gray: #bda0ae;
+    --gray-bg: #33232b;
+    --ok: #86d4ab;
+    --focus: #e87aa3;
+    --borda-campo: #5e4452;
+    --sombra: 0 2px 10px rgb(0 0 0 / .35);
+    --sombra-forte: 0 6px 20px rgb(0 0 0 / .5);
     color-scheme: dark;
   }
 }
 
 :root[data-theme="dark"] {
-  --bg: #121418;
-  --surface: #1b1e24;
-  --text: #e9e7e2;
-  --muted: #a3a9b4;
-  --line: #353a44;
-  --accent: #73b4e2;
-  --accent-fg: #0a1620;
-  --red: #ff8f85;
-  --red-bg: #3b1814;
-  --amber: #f3c453;
-  --amber-bg: #33280c;
-  --gray: #9ba2ac;
-  --gray-bg: #262a31;
-  --ok: #7cd19b;
-  --focus: #73b4e2;
-  --borda-campo: #5a6270;
+  --bg: #1c1217;
+  --surface: #2a1c24;
+  --text: #f6e8ee;
+  --muted: #bda0ae;
+  --line: #3d2b35;
+  --accent: #e87aa3;
+  --accent-fg: #2a0f1b;
+  --accent-soft: #41242f;
+  --accent-texto: #f3a6c1;
+  --red: #ff93a8;
+  --red-bg: #40181f;
+  --amber: #f3c27d;
+  --amber-bg: #38270f;
+  --gray: #bda0ae;
+  --gray-bg: #33232b;
+  --ok: #86d4ab;
+  --focus: #e87aa3;
+  --borda-campo: #5e4452;
+  --sombra: 0 2px 10px rgb(0 0 0 / .35);
+  --sombra-forte: 0 6px 20px rgb(0 0 0 / .5);
   color-scheme: dark;
 }
 
@@ -74,7 +86,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font: 14px/1.4 var(--fonte);
-  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
+  padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 36px);
   overflow-wrap: anywhere;
 }
 body.folha-aberta { overflow: hidden; }
@@ -424,3 +436,96 @@ button.pend-nova { min-height: 44px; padding: 0 14px; font-size: 12px; }
 .mudou-lista { padding-left: 16px; }
 .barra .primario { font-size: 13px; padding: 0 12px; }
 .alerta .acoes-linha button { min-height: 44px; }
+
+/* ======================================================================
+   Visual rosa v3: cantos redondos, cartões com sombra suave, menos linhas.
+   Fica no fim de propósito: sobrepõe as regras acima sem mudar nenhuma tela.
+   ====================================================================== */
+button { border-radius: 14px; }
+button.primario { border-radius: 999px; box-shadow: 0 4px 10px rgb(194 82 122 / .28); }
+input, select, textarea { border-radius: 14px; background: var(--bg); }
+textarea.previa, .editor textarea { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.chip { border-radius: 999px; }
+fieldset { border-color: var(--line); }
+.titulo-aba { font-size: 22px; font-weight: 800; }
+.tela { gap: 12px; padding: 10px 16px; }
+
+/* Topo */
+.topo { border-bottom: 0; background: var(--bg); padding: 14px 16px 6px; padding-top: max(14px, env(safe-area-inset-top)); gap: 10px; }
+.logo { width: 32px; height: 32px; flex: none; }
+.marca { font-size: 19px; font-weight: 800; color: var(--accent-texto); }
+.data-hoje { font-family: var(--fonte); font-size: 12px; text-align: right; }
+.tema, .calc-btn {
+  width: 44px; height: 44px; min-width: 44px; padding: 0; border: 0; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent-texto); font-size: 17px; line-height: 1;
+  display: grid; place-items: center;
+}
+
+/* Barra de abas flutuante */
+.abas { inset: auto 8px calc(env(safe-area-inset-bottom) + 10px) 8px; border: 0; border-radius: 24px; box-shadow: var(--sombra-forte); padding: 5px; gap: 2px; }
+.abas button { min-height: 46px; padding: 4px 0; border-radius: 18px; font-weight: 600; font-size: clamp(8.5px, 2.35vw, 12px); letter-spacing: -.01em; }
+.abas button[aria-current="page"] { background: var(--accent-soft); color: var(--accent-texto); font-weight: 800; box-shadow: none; }
+.aviso { bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 28px); border-radius: 16px; }
+.atualizar { bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 92px); border-radius: 16px; }
+
+/* Cartões */
+.cartao, .prot-dx, .med, .sug, .faixa-leito, .prog-linha { border: 0; box-shadow: var(--sombra); border-radius: var(--radius); }
+.cartao { padding: 16px 16px 10px; }
+.cartao-rodape { border-top-color: var(--line); }
+.alergia, .alerta, .mudou { border-radius: 14px; }
+.mudou { background: var(--accent-soft); }
+.med, .sug { padding: 10px 14px; }
+.bloco h3, .bloco > summary { font-size: 11.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
+.mod { border-style: solid; border-color: var(--line); background: var(--bg); }
+.mod.ligado { border-color: var(--accent); background: var(--accent); }
+.cat, .tag, .etq-ex { border-radius: 999px; }
+.pend .check { border: 2px solid var(--borda-campo); border-radius: 50%; background: transparent; color: transparent; font-size: 0; }
+.pend .check::after { content: ""; }
+.pend .check:active { background: var(--accent-soft); }
+.leito, .v-leito { font-weight: 800; }
+.v-ig, .fx-ig, .ig { color: var(--accent-texto); }
+
+/* Censo: cada leito vira um cartão (leito + IG, diagnóstico, etiquetas) */
+.faixas { gap: 10px; }
+.faixa-leito { gap: 6px 10px; align-items: center; padding: 14px 16px; min-height: 0; font-size: 13px; }
+.faixa-leito .sep { display: none; }
+.fx-leito { order: 1; font-family: var(--fonte); font-size: 17px; font-weight: 800; }
+.fx-ig { order: 2; font-family: var(--fonte); font-size: 13.5px; background: var(--accent-soft); padding: 2px 10px; border-radius: 999px; }
+.fx-ig.ig-nada { background: none; padding: 0; font-weight: 400; color: var(--muted); }
+.fx-ini { order: 3; }
+.fx-dx { order: 4; flex: 0 0 100%; }
+.fx-alertas, .fx-pends { order: 5; border-radius: 999px; padding: 3px 10px; font-size: 11.5px; }
+.fx-alertas.tem { background: var(--red-bg); color: var(--red); }
+.fx-pends.tem { background: var(--amber-bg); color: var(--amber); }
+
+/* Folha inferior */
+.folha-fundo { background: rgb(40 20 30 / .5); }
+.folha-corpo { border-radius: 28px 28px 0 0; }
+
+/* Calculadoras */
+.calc { display: grid; gap: 14px; min-width: 0; }
+.calc-cab { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.calc-abas { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.calc-abas::-webkit-scrollbar { display: none; }
+.calc-aba, .calc-bt, .calc-op { border: 0; background: var(--bg); color: var(--text); font-weight: 700; }
+.calc-aba { flex: 1 0 auto; border-radius: 999px; padding: 0 12px; color: var(--muted); }
+.calc-aba[aria-pressed="true"], .calc-bt[aria-pressed="true"], .calc-op[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); }
+.calc-sub, .calc-crit legend { font-size: 11.5px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); padding: 0; }
+.calc-grade { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.calc-grade-mes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.calc-bt { min-width: 0; padding: 0; }
+.calc-crit { border: 0; padding: 0; display: grid; gap: 6px; }
+.calc-ops { display: grid; grid-template-columns: repeat(auto-fit, minmax(118px, 1fr)); gap: 6px; }
+.calc-op { padding: 6px 12px; text-align: left; font-weight: 600; }
+.calc-op b { color: var(--accent-texto); margin-right: 4px; }
+.calc-op[aria-pressed="true"] b { color: inherit; }
+.calc-minutos { display: flex; gap: 6px; }
+.calc-min { flex: 1; }
+.calc-res { position: sticky; bottom: 0; display: grid; gap: 4px; padding: 12px 16px; border-radius: 20px; background: var(--accent-soft); box-shadow: var(--sombra-forte); }
+.calc-linha { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.calc-linha b { font-size: 20px; font-weight: 800; color: var(--accent-texto); text-align: right; }
+.calc-dica { color: var(--muted); }
+.calc-erro { color: var(--red); font-weight: 700; }
+.calc-rodape { text-align: center; }
+
+.visita .pend .check { font-size: 0; }

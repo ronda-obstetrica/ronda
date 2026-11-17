@@ -12,6 +12,7 @@ import * as dados from './ui/dados.js';
 import * as programacao from './ui/programacao.js';
 import * as paciente from './ui/paciente.js';
 import * as formularios from './ui/formularios.js';
+import * as calculadoras from './ui/calculadoras.js';
 
 // Registro das telas. A página da paciente existe em TELAS mas fica fora da barra de abas.
 const TELAS = { censo, hoje: telaHoje, programacao, paciente, plantao, protocolos, dados };
@@ -21,6 +22,7 @@ const ABAS = [
   ['plantao', 'Plantão'], ['protocolos', 'Protocolos'], ['dados', 'Dados'],
 ];
 const TEMAS = { auto: 'automático', light: 'claro', dark: 'escuro' };
+const ICONES_TEMA = { auto: '◐', light: '☀', dark: '☾' };
 const CHAVE_TEMA = 'ronda-tema';
 
 let estado;
@@ -126,7 +128,11 @@ function irPara(nova) {
 function aplicarTema(t) {
   if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
   else delete document.documentElement.dataset.theme;
-  $('#botao-tema').textContent = `Tema: ${TEMAS[t] ?? TEMAS.auto}`;
+  const nome = TEMAS[t] ?? TEMAS.auto;
+  const b = $('#botao-tema');
+  b.textContent = ICONES_TEMA[t] ?? ICONES_TEMA.auto;
+  b.setAttribute('aria-label', `Tema: ${nome} (toque para trocar)`);
+  b.title = `Tema: ${nome}`;
 }
 
 function lerTema() {
@@ -134,6 +140,7 @@ function lerTema() {
 }
 
 const acoesGlobais = {
+  ...calculadoras.acoes,
   aba: (ev, el) => irPara(el.dataset.aba),
   'fechar-folha': () => fecharFolha(),
   // Faixa do Censo, leito do Hoje ou da Programação: abre a página da paciente naquele leito.

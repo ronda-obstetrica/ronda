@@ -1,5 +1,5 @@
 // Service worker do Ronda Obstétrica: app offline. Ao mudar qualquer arquivo, aumente a VERSAO.
-const VERSAO = 'ronda-v2-3';
+const VERSAO = 'ronda-v2-4';
 // Fontes do Google: cache próprio, sem versão (só guarda fontes; sobrevive a atualizações do app).
 const CACHE_FONTES = 'ronda-fontes';
 const ARQUIVOS = [
@@ -10,6 +10,7 @@ const ARQUIVOS = [
   'js/app.js',
   'js/pwa.js',
   'js/nucleo/alertas.js',
+  'js/nucleo/calculadoras.js',
   'js/nucleo/contexto.js',
   'js/nucleo/datacao.js',
   'js/nucleo/datas.js',
@@ -26,6 +27,7 @@ const ARQUIVOS = [
   'js/relatorios/ficha.js',
   'js/relatorios/planilha.js',
   'js/relatorios/texto.js',
+  'js/ui/calculadoras.js',
   'js/ui/cartao.js',
   'js/ui/censo.js',
   'js/ui/compartilhar.js',
